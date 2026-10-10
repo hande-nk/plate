@@ -1,0 +1,27 @@
+/* Plate design tokens, v3.1 (checked off Oct 10, 2026).
+   One color, one meaning: matcha means progress. Nothing else. */
+:root {
+  --paper: #F4F4F1;
+  --card: #FFFFFF;
+  --hairline: #ECECE6;
+  --ink: #121212;
+  --stone: #6A6A66;
+  --matcha: #C9D7A6;
+  --matcha-line: #5F7A2E;
+
+  --radius-card: 24px;
+  --radius-control: 14px;
+  --tap: 44px; /* HIG minimum target */
+}
+
+/* TODO(design): dark mode tokens before Sprint 2. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body { font-family: var(--font-geist-sans), system-ui, sans-serif; font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+button { font: inherit; color: inherit; min-height: var(--tap); }
+.card { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-card); padding: 16px; }
+.muted { color: var(--stone); font-size: 13px; }
+.btn { border: none; border-radius: 27px; background: var(--ink); color: var(--paper); padding: 0 22px; min-height: 54px; font-size: 17px; font-weight: 500; cursor: pointer; }
+.btn:disabled { opacity: 0.4; cursor: default; }
