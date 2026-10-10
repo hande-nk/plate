@@ -1,6 +1,6 @@
 # Plate
 
-A progress-first food journal for the Tufts meal plan. Photos never leave the phone.
+A progress-first food journal. Photos never leave the phone.
 Decisions live in STUDIO_LOG.md (Naz Studio project). Design tokens: `app/globals.css` (v3.1).
 
 ## Run it
