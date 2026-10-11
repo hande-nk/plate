@@ -21,11 +21,11 @@ function cleanOCR(text: string): string {
     .replace(/Prote\s+in/gi, "Protein")  // common OCR mistake
     .replace(/Calor\s+ies/gi, "Calories")  // common OCR mistake
     .replace(/(?<=[a-z])q(?=[a-z])/gi, "g")  // q -> g in the middle of a word
-    .replace(/(?<=\d)0z\b/gi, " oz")
+    .replace(/(?<=\d)\s?0\s?z+\b/gi, " oz")
 }
 
 function toNumber(s: string): number{
-  return parseFloat(s.replace(/[Oo]/g, "0")); //O to 0, o to 0, then parse
+  return parseFloat(s.replace(/[Oo]/g, "0").replace(/\//g, ""));
 }
 
 function grab(text:string, re:RegExp): number | null {
@@ -39,7 +39,7 @@ function grab(text:string, re:RegExp): number | null {
 export function parseLabel(ocrText: string): LabelFacts | null {
   const text = cleanOCR(ocrText);
 
-  const kcal = grab(text, /Calories(?!\s+from)\s+([\dOo]+)/i);
+  const kcal = grab(text, /Calories(?!\s+from)\s+([\dOo/]+)/i);
   if (kcal === null) return null;
 
   const servingSizeMatch = text.match(/Serving Size\s+([^\n]+)/i);

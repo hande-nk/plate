@@ -50,4 +50,20 @@ Total Carbohydrate 26g 9%`;
   it("fixes ounces OCR'd as 0z", () => {
     expect(parseLabel("Serving Size 40z\nCalories 104")!.servingSize).toBe("4 oz");
   });
+
+  it("drops a stray slash inside calories", () => {
+    expect(parseLabel("Calories 15/7")!.kcal).toBe(157);
+  });
+
+  it("keeps real fractions in the serving size", () => {
+    expect(parseLabel("Serving Size 1/2 cup\nCalories 90")!.servingSize).toBe("1/2 cup");
+  });
+
+  it.each([
+    ["40Zz", "4 oz"],
+    ["1 0Z", "1 oz"],
+    ["40z",  "4 oz"],
+  ])("normalizes ounce OCR %s → %s", (raw, want) => {
+    expect(parseLabel(`Serving Size ${raw}\nCalories 100`)!.servingSize).toBe(want);
+  });
 });
