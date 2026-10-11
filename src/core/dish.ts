@@ -1,6 +1,6 @@
 // src/core/dish.ts
 import { LabelFacts } from "./labelParser";
-import { Hall } from "./router";
+import type { Hall } from "./router";
 
 export type NewDish = {
   hall: "carm" | "dewick" | "hodge" | "kindlevan" | null;
