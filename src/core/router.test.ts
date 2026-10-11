@@ -31,7 +31,7 @@ describe("item router", () => {
     expect(routeItem({ ...base, container: "wrapper" }).confirm).toBe(true);
   });
 
-  it("an online food order", ()=> {
-    expect(routeItem({...base, container: "app"}).confirm).toBe(true);
-  })
+  it("an app order asks to confirm", () => {
+    expect(routeItem({ ...base, container: "app" })).toEqual({ route: "app-order", confirm: true });
+  });
 });

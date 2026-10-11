@@ -4,6 +4,7 @@
    hodgdon-box    Hodgdon to-go box, matched against Hodgdon's menu
    tufts-packaged Grab-and-go item with a Tufts sticker, look up by name
    outside-snack  Anything with a full nutrition label, read the label
+   app-order      Food ordered from UberEats or DoorDash
  Signals are cheap ones the phone already has. Decide in this order of trust:
    1. a nutrition label (it's the most exact source)
    2. a Tufts sticker
@@ -36,7 +37,7 @@ export function routeItem(s: ItemSignals): RouteDecision {
     return { route: "tufts-packaged", confirm: false };
   }
 
-  const diningHall = s.hall === "carm" || s.hall === "dewick" || s.hall === "hodge" || s.hall === "kindlevan";
+  const diningHall = s.hall === "carm" || s.hall === "dewick";
   if(s.container === "plate" && diningHall) {
     return { route: "plate", confirm: false };
   }
