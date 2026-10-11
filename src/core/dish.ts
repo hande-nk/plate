@@ -13,6 +13,14 @@ export type NewDish = {
   source: "screenshot";
 };
 
+/** "" or junk → null; "22" → 22; " 1.6 " → 1.6 */
+export function optionalNumber(s: string): number | null{
+    const trimmed = s.trim();
+    if (trimmed === "") return null;
+    const number = Number(trimmed);
+    return Number.isFinite(number) ? number : null;
+}
+
 export function toDishRow(facts: LabelFacts, name: string, hall: Hall): NewDish | null{
 
     const trimmed = name.trim();

@@ -1,5 +1,5 @@
 import { describe, it, expect} from "vitest";
-import { toDishRow } from "./dish";
+import { optionalNumber, toDishRow } from "./dish";
 import type { LabelFacts } from "./labelParser";
 
 //The Blackend Halal Chicken Label
@@ -54,4 +54,13 @@ describe("toDishRow", () => {
     it("allows 0 kcal (black coffee is real)", () => {
         expect(toDishRow({ ...chicken, kcal: 0 }, "Coffee", "carm")?.kcal).toBe(0);
     });
+});
+
+describe("optionalNumber", () => {
+  it.each([["22", 22], [" 1.6 ", 1.6], ["0", 0]])("%j → %s", (s, n) => {
+    expect(optionalNumber(s)).toBe(n);
+  });
+  it.each(["", "   ", "abc"])("%j → null", (s) => {
+    expect(optionalNumber(s)).toBeNull();
+  });
 });
