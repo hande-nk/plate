@@ -47,4 +47,7 @@ Total Carbohydrate 26g 9%`;
   it("returns null with no calories", () => {
     expect(parseLabel("INGREDIENTS: oats, honey, almonds")).toBeNull();
   });
+  it("fixes ounces OCR'd as 0z", () => {
+    expect(parseLabel("Serving Size 40z\nCalories 104")!.servingSize).toBe("4 oz");
+  });
 });

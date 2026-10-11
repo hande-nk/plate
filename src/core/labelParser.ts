@@ -1,3 +1,4 @@
+
 /*
  Turn messy OCR text from a US nutrition label into numbers.
  Tesseract makes mistakes: "Calor1es", "Prote in", "43q", "O" for "0".
@@ -20,6 +21,7 @@ function cleanOCR(text: string): string {
     .replace(/Prote\s+in/gi, "Protein")  // common OCR mistake
     .replace(/Calor\s+ies/gi, "Calories")  // common OCR mistake
     .replace(/(?<=[a-z])q(?=[a-z])/gi, "g")  // q -> g in the middle of a word
+    .replace(/(?<=\d)0z\b/gi, " oz")
 }
 
 function toNumber(s: string): number{
