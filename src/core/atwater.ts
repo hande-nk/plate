@@ -1,4 +1,5 @@
 // src/core/atwater.ts
+//Wilbur Olin Atwater (1844–1907),
 import type { LabelFacts } from "./labelParser";
 
 // Atwater factors: kcal per gram

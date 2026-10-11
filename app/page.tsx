@@ -17,6 +17,9 @@ export default function Today() {
       <Link href="/spike" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Run the speed test
       </Link>
+      <Link href="/ocr" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+        Run the ocr test
+      </Link>
     </main>
   );
 }
