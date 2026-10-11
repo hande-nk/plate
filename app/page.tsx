@@ -1,7 +1,35 @@
+"use client"    
+
+import { useEffect, useState} from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+
+
+const linkBtn: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textDecoration: "none",
+};
+
 
 // Today screen shell. Real content arrives in Nov (see STUDIO_LOG roadmap).
 export default function Today() {
+  const router = useRouter();
+  // Stays false until we know there's a session, so Today never flashes for a logged-out visitor.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.replace("/login");
+      else setReady(true);
+
+    });
+  }, [router]);
+
+  if (!ready) return null;
+
   return (
     <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="muted">Day 1 · Sprint 1</div>
