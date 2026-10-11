@@ -5,6 +5,7 @@ import type { Hall } from "@/core/router";
 import { createWorker } from "tesseract.js";
 import { parseLabel, type LabelFacts } from "@/core/labelParser";
 import { atwaterKcal, isPlausible } from "@/core/atwater";
+import { guessName } from "@/core/dishName";
 
 type AddWorker = Awaited<ReturnType<typeof createWorker>>;
 
@@ -81,6 +82,7 @@ export default function AddPage() {
             setCarbs(parsed.carbsG === null ? "" : String(parsed.carbsG));
             setFat(parsed.fatG === null ? "" : String(parsed.fatG));
             setServing(parsed.servingSize ?? "");
+            setName(guessName(data.text) ?? "");
             setStatus("Check the numbers, then save.");
         } catch (err) {
             setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
