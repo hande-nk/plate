@@ -48,6 +48,17 @@ export default function Today() {
       <Link href="/ocr" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Run the ocr test
       </Link>
+
+      <button
+        className="muted"
+        style={{ background: "none", border: "none", minHeight: "var(--tap)", cursor: "pointer" }}
+        onClick={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      >
+        Log out
+      </button>
     </main>
   );
 }
