@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import type { Hall } from "@/core/router";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
 
-
+type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null};
 const HALLS: { id: Hall; label: string } [] = [
     { id: "carm", label: "Carm" },
     { id: "dewick", label: "Dewick" },
@@ -21,6 +22,40 @@ export default function LogPage() {
     const [notice, setNotice] = useState<{ kind: "error" | "ok"; text: string } | null>(null);
     const [tries, setTries] = useState(0);
     const [busy, setBusy] = useState(false);
+    const [image, setImage] = useState<string | null>(null);
+    const [status, setStatus] = useState("");
+    const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
+
+    function call<T>(msg: object): Promise<T> {
+        return new Promise((resolve, reject) => {
+        const w = worker.current!;
+        w.onmessage = (e) => {
+            const d = e.data;
+            if (d.type === "progress") {
+            const p = d.p as { status?: string; file?: string; progress?: number };
+            if (p.status === "progress" && p.file) setStatus(`Downloading ${p.file.split("/").pop()} ${Math.round(p.progress ?? 0)}%`);
+            return;
+            }
+            if (d.type === "error") reject(new Error(d.message));
+            else resolve(d as T);
+        };
+        w.postMessage(msg);
+        });
+    }
+
+    useEffect(() => () => worker.current?.terminate(), []);
+
+    async function getWorker() {
+        if(worker.current) return;
+        worker.current = new Worker(new URL("../../src/workers/matcher.worker.ts", import.meta.url), {type: "module"});
+        const gpu = "gpu" in navigator; 
+
+        setStatus("Loading the matcher (first time downloading it)...");
+        await call({ 
+            type: "load", model: "Xenova/clip-vit-base-patch32",
+            device: gpu ? "webgpu" : "wasm", dtype: gpu ? "fp16" : "q8"
+        });
+    }
     
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
@@ -33,11 +68,47 @@ export default function LogPage() {
     function fail(text: string) { setNotice({kind: "error", text: text}); setTries((t) => t + 1); }
     
     async function onSnap(e: React.ChangeEvent<HTMLInputElement>) {
+        //CLIP matching: Contrastive Language-Image Pretraining
+
         const file = e.target.files?.[0];
         if(!file) return;
+
+
+        const url = URL.createObjectURL(file);
+        setImage(url);
+        setRanked([]);
+        setNotice(null);
+        setBusy(true);
+
+        try{ 
+            await getWorker();
+            setStatus("Matching...");
+
+            //1. CLIP scores every dish name at this hall
+            const res = await call<{ ms: number; out: ClipOut}> ({
+                type: "run", imageUrl: url, labels: dishes.map((d) => d.name),
+            });
+
+
+            //2. system's math
+            const sims =  toSims(res.out, dishes.map((d) =>  ({ id: String(d.id), name: d.name})));
+            const { data: past } = await supabase.from("meals").select("dish_id").not("dish_id", "is", null);
+            const prior = buildPrior((past ?? []).map((m) => String(m.dish_id)), Object.keys(sims));
+            const scored = scoreDishes(sims, prior);
+
+            //3. ids back to dishes, keep the top 3
+            const byId = new Map(dishes.map((d) => [String(d.id), d]));
+            setRanked(scored.slice(0, -1).map((s) => ({ dish: byId.get(s.dishId)!, p: s.p})));
+            setStatus(`Matched in ${Math.round(res.ms)} ms`);
+        } catch (err) {
+            fail (err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+
     }
-    
-    type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null};
+
+
     const [dishes, setDishes] = useState<Dish[]> ([]);
 
     useEffect(() => {
@@ -83,10 +154,23 @@ export default function LogPage() {
                 })}
             </div>
 
+            {ranked.map(({ dish, p }) => (
+                <button key={dish.id} type="button" className="card" style={{ textAlign: "left", cursor: "pointer", fontFamily: "inherit"}}>
+                    <div style={{ fontWeight:500 }}>{dish.name}</div>
+                    <div className="muted">{dish.kcal} kcal · {Math.round(p * 100)}% match </div>
+                </button>
+            ))}
+            
+            {image && <img src={image} alt="" style={{ width: "100%", borderRadius: 14}} /> }
+            
+            
+
+            
+
             <div className="muted">{dishes.length} dishes at  {HALLS.find((h) => h.id === hall)?.label}</div>
 
             <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center"}}>
-                {busy ? "Matching...." : "Sanp your plate"}
+                {busy ? "Matching..." : "Snap your plate"}
                 <input type="file" accept="image/*" capture="environment" onChange={onSnap} disabled={busy || dishes.length === 0} hidden />
             </label>
             {notice && (
