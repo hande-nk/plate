@@ -12,10 +12,31 @@
 
 export interface ScoredDish { dishId: string; p: number }
 
+
+
+
 export interface ScoreOptions {
   temperature?: number;  // default 0.01 (CLIP similarities are close together)
   alpha?: number;        // prior weight, default 0.5. 0 = ignore your history
   epsilon?: number;      // prior floor for unseen dishes, default 0.02
+}
+
+export type ClipOut = { label: string; score: number }[];
+/** CLIP's [{label, score}] -> { dishId: similarity }, using log(score)/100. */
+export function toSims(out: ClipOut, dishes: { id: string; name: string }[]): Record<string, number> {
+  //lookup table: name -> id
+  const idByName = new Map(dishes.map((d) => [d.name, d.id]));
+
+  const sims: Record<string, number> = {};
+
+  //2. walk through CLIP's answers
+  for (const { label, score } of out) {
+    const id = idByName.get(label);
+    if (id === undefined || score <= 0) continue;
+    sims[id] = Math.log(score) / 100;
+  }
+
+  return sims;
 }
 
 /** sims: similarity per dish on TODAY'S menu. prior: your history (need not sum to 1). */

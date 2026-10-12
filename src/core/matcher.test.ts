@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scoreDishes, buildPrior } from "./matcher";
+import { toSims, scoreDishes, buildPrior } from "./matcher";
 
 const sum = (xs: { p: number }[]) => xs.reduce((a, b) => a + b.p, 0);
 
@@ -48,5 +48,30 @@ describe("personal prior", () => {
     expect(prior.pasta).toBeCloseTo(2 / 6, 9);
     expect(prior.haddock).toBeCloseTo(1 / 6, 9);
     expect(prior.sushi).toBeUndefined();
+  });
+});
+
+const dishes = [{ id: "a", name: "Lentil Soup" }, { id: "b", name: "Pesto Pasta" }, { id: "c", name: "Rice" }];
+
+describe("toSims", () => {
+  it("keys by dish id", () => {
+    expect(Object.keys(toSims([{ label: "Rice", score: 0.5 }, { label: "Pesto Pasta", score: 0.3 }, { label: "Lentil Soup", score: 0.2 }], dishes)).sort()).toEqual(["a", "b", "c"]);
+  });
+  it("undoes CLIP's softmax: softmax(sim / 0.01) gives the scores back", () => {
+    const out = [{ label: "Lentil Soup", score: 0.7 }, { label: "Pesto Pasta", score: 0.2 }, { label: "Rice", score: 0.1 }];
+    const s = toSims(out, dishes);
+    const ex = Object.values(s).map((v) => Math.exp(v / 0.01));
+    const z = ex.reduce((x, y) => x + y, 0);
+    expect(Math.exp(s.a / 0.01) / z).toBeCloseTo(0.7, 6);
+  });
+  it("keeps the order: higher score, higher sim", () => {
+    const s = toSims([{ label: "Rice", score: 0.6 }, { label: "Pesto Pasta", score: 0.4 }], dishes);
+    expect(s.c).toBeGreaterThan(s.b);
+  });
+  it("skips labels that aren't in your dishes", () => {
+    expect(toSims([{ label: "Mystery Stew", score: 1 }], dishes)).toEqual({});
+  });
+  it("skips a zero score instead of making -Infinity", () => {
+    expect(toSims([{ label: "Rice", score: 0 }], dishes)).toEqual({});
   });
 });
