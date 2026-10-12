@@ -37,7 +37,7 @@ export default function AddPage() {
     const [ms, setMs] = useState<number | null>(null);
     const [busy, setBusy] = useState(false);
     const [name, setName] = useState("");
-    const [hall, setHall] = useState<Hall>("dewick");
+    const [hall, setHall] = useState<Hall>("kindlevan");
     const [kcal, setKcal] = useState("");
     const [protein, setProtein] = useState("");
     const [carbs, setCarbs] = useState("");
