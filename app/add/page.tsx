@@ -48,6 +48,7 @@ export default function AddPage() {
     const router = useRouter();
     const [notice, setNotice] = useState<{ kind: "error" | "ok"; text: string } | null>(null);
     const [tries, setTries] = useState(0);
+    const [confirmed, setConfirmed] = useState(false);
         
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
@@ -80,6 +81,7 @@ export default function AddPage() {
         setImage(URL.createObjectURL(file));
         setText("");
         setNotice(null);
+        setConfirmed(false);
         setFacts(null);
         setMs(null);
         setBusy(true);
@@ -123,6 +125,22 @@ export default function AddPage() {
 
         const row = toDishRow(edited, name, hall);
         if (!row) { fail("Add a name and calories."); return; }
+        const { proteinG: p, carbsG: c, fatG: f } = edited;
+
+        const predicted =
+            p !== null && c !== null && f !== null
+                ? Math.round(atwaterKcal({ ...edited, proteinG: p, carbsG: c, fatG: f }))
+                : null;
+
+        if(!isPlausible(edited) && !confirmed){
+            setConfirmed(true);
+            fail(
+                predicted !== null
+                ? `Calories don't match the macros (they add up to about ${predicted}). Check the numbers, or tap Save again to keep them.`
+                : "These numbers look off. Check them, or tap Save again to keep them."
+            );
+            return;
+        }
 
         setSaving(true);
         const { error } = await supabase.from("dishes").insert(row);
@@ -133,6 +151,8 @@ export default function AddPage() {
             fail(error.code === "23505" ? "Already in your library." : error.message);
             return;
         }
+
+        
         
         setNotice({kind: "ok", text: `Saved ${row.name}`});
         
@@ -140,6 +160,7 @@ export default function AddPage() {
 
     
     if (!ready) return null;
+    
 
     return(
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -181,22 +202,22 @@ export default function AddPage() {
                 </div>
                 <label className="muted">
                     Calories
-                    <input value={kcal} onChange={(e) => setKcal(e.target.value)} inputMode="decimal" style={inputStyle} />
+                    <input value={kcal} onChange={(e) => {setKcal(e.target.value); setConfirmed(false)} } inputMode="decimal" style={inputStyle} />
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                     <label className="muted">
                         Protein
-                        <input value={protein} onChange={(e) => setProtein(e.target.value)} inputMode="decimal" style={inputStyle} />
+                        <input value={protein} onChange={(e) => {setProtein(e.target.value); setConfirmed(false)}} inputMode="decimal" style={inputStyle} />
                     </label>
 
                     <label className="muted">
                         Carbs
-                        <input value={carbs} onChange={(e) => setCarbs(e.target.value)} inputMode="decimal" style={inputStyle} />
+                        <input value={carbs} onChange={(e) => {setCarbs(e.target.value);  setConfirmed(false)}} inputMode="decimal" style={inputStyle} />
                     </label>    
 
                     <label className="muted">
                         Fat
-                        <input value={fat} onChange={(e) => setFat(e.target.value)} inputMode="decimal" style={inputStyle} />
+                        <input value={fat} onChange={(e) => {setFat(e.target.value); setConfirmed(false)}} inputMode="decimal" style={inputStyle} />
                     </label>
                 </div>
 
@@ -213,6 +234,7 @@ export default function AddPage() {
                 )}
 
                 <details><summary className="muted">Raw OCR text</summary><pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{text}</pre></details>
+                
                 <button type="button" className="btn" onClick={onSave} disabled={saving || busy}>
                     Save
                 </button>

@@ -35,6 +35,29 @@ function grab(text:string, re:RegExp): number | null {
 
 
 
+export function readGrams(text: string, label: RegExp): number | null {
+  // 1. label + space + the number + an optional "g"
+  const pattern = new RegExp(label.source + String.raw`\s+([\dOo.]+)\s?([gq]?)`, "i");
+  const m = pattern.exec(text);
+  if(!m) return null;
+
+
+  //2. OCR sometimes reads 0 as O or o
+  let num = m[1].replace(/[Oo]/g, "0");
+
+  //3. no "g" after it. longer than 1 char, ends in 9
+  if (m[2] === "" && num.length > 1 && num.endsWith("9")) {
+    num = num.slice(0, -1);
+  }
+
+  return parseFloat(num);
+
+}
+
+export function cleanServing(s: string): string {
+  return s.replace(/(\d)\s*[o0]+\s*z+\b/gi, "$1 oz").trim();
+}
+
 //funtion to parse the OCR text and extract nutrition facts
 export function parseLabel(ocrText: string): LabelFacts | null {
   const text = cleanOCR(ocrText);
@@ -43,12 +66,12 @@ export function parseLabel(ocrText: string): LabelFacts | null {
   if (kcal === null) return null;
 
   const servingSizeMatch = text.match(/Serving Size\s+([^\n]+)/i);
-  const servingSize = servingSizeMatch ? servingSizeMatch[1].trim() : null;
+  const servingSize = servingSizeMatch ? cleanServing(servingSizeMatch[1]) : null;
   return {
     kcal,
     servingSize,
-    proteinG: grab(text, /Protein\s+([\dOo.]+)/i),
-    carbsG: grab(text, /Total Carbohydrate\s+([\dOo.]+)/i),
-    fatG: grab(text, /Total\s+Fat\s+([\dOo.]+)/i)
+    proteinG: readGrams(text, /Protein/i),
+    carbsG: readGrams(text, /Total Carbohydrate/i),
+    fatG: readGrams(text, /Total\s+Fat/i)
   }
 }
