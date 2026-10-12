@@ -8,6 +8,8 @@
   --stone: #6A6A66;
   --matcha: #C9D7A6;
   --matcha-line: #5F7A2E;
+  --alert: #A32D2D;
+  --alert-bg: #FCEBEB;  
 
   --radius-card: 24px;
   --radius-control: 14px;
@@ -25,3 +27,10 @@ button { font: inherit; color: inherit; min-height: var(--tap); }
 .muted { color: var(--stone); font-size: 13px; }
 .btn { border: none; border-radius: 27px; background: var(--ink); color: var(--paper); padding: 0 22px; min-height: 54px; font-size: 17px; font-weight: 500; cursor: pointer; }
 .btn:disabled { opacity: 0.4; cursor: default; }
+.alert { background: var(--alert-bg); color: var(--alert); border: 1px solid var(--alert);
+         border-radius: var(--radius-control); padding: 12px 14px; font-size: 15px;
+         animation: nudge .35s; }
+.ok    { background: var(--matcha); border-radius: var(--radius-control); padding: 12px 14px; font-size: 15px; }
+
+@keyframes nudge { 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
+@media (prefers-reduced-motion: reduce) { .alert { animation: none } }

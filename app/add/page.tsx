@@ -6,6 +6,10 @@ import { createWorker } from "tesseract.js";
 import { parseLabel, type LabelFacts } from "@/core/labelParser";
 import { atwaterKcal, isPlausible } from "@/core/atwater";
 import { guessName } from "@/core/dishName";
+import { optionalNumber,toDishRow  } from "@/core/dish";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+
 
 type AddWorker = Awaited<ReturnType<typeof createWorker>>;
 
@@ -39,6 +43,22 @@ export default function AddPage() {
     const [carbs, setCarbs] = useState("");
     const [fat, setFat] = useState("");
     const [serving, setServing] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [ready, setReady] = useState(false);
+    const router = useRouter();
+    const [notice, setNotice] = useState<{ kind: "error" | "ok"; text: string } | null>(null);
+    const [tries, setTries] = useState(0);
+        
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) router.replace("/login");
+        else setReady(true);
+
+        });
+    }, [router]);
+
+    function fail(text: string) { setNotice({kind: "error", text: text}); setTries((t) => t + 1); }
+
 
     // Shut the engine down when you leave the page.
     useEffect(() => () => { workerRef.current?.terminate(); }, []);
@@ -59,6 +79,7 @@ export default function AddPage() {
         if (!file) return;
         setImage(URL.createObjectURL(file));
         setText("");
+        setNotice(null);
         setFacts(null);
         setMs(null);
         setBusy(true);
@@ -91,7 +112,34 @@ export default function AddPage() {
         }
     }
 
+    async function onSave() {
+        const edited: LabelFacts = {
+            kcal: optionalNumber(kcal) ?? NaN,
+            servingSize: serving.trim() || null,
+            proteinG: optionalNumber(protein),
+            carbsG: optionalNumber(carbs),
+            fatG: optionalNumber(fat),
+        };
+
+        const row = toDishRow(edited, name, hall);
+        if (!row) { fail("Add a name and calories."); return; }
+
+        setSaving(true);
+        const { error } = await supabase.from("dishes").insert(row);
+        setSaving(false);
+
+        if(error) {
+            //23505: unique rule violated
+            fail(error.code === "23505" ? "Already in your library." : error.message);
+            return;
+        }
+        
+        setNotice({kind: "ok", text: `Saved ${row.name}`});
+        
+    }
+
     
+    if (!ready) return null;
 
     return(
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -159,10 +207,15 @@ export default function AddPage() {
                 </label>
 
 
-                {/* debug line: proves your state works. Delete it in layer 3. */}
-                <div className="muted">Saving as {name.trim() || "…"} at {hall}</div>
+                {notice && (
+                    <div key={tries} role={notice.kind === "error" ? "alert" : "status"}
+                        className={notice.kind === "error" ? "alert" : "ok"}>{notice.text}</div>
+                )};
 
                 <details><summary className="muted">Raw OCR text</summary><pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{text}</pre></details>
+                <button type="button" className="btn" onClick={onSave} disabled={saving || busy}>
+                    Save
+                </button>
             </div>
         </main>
     );
