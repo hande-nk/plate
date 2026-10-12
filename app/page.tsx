@@ -42,13 +42,17 @@ export default function Today() {
         <div style={{ fontSize: 14 }}>&ldquo;Kuzum, the case is open. First, we test the machine.&rdquo;</div>
         <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>Safiye Hanım</div>
       </div>
+      <Link href="/add" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+        Add a dish
+      </Link>
+
       <Link href="/spike" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Run the speed test
       </Link>
       <Link href="/ocr" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Run the ocr test
       </Link>
-
+      
       <button
         className="muted"
         style={{ background: "none", border: "none", minHeight: "var(--tap)", cursor: "pointer" }}

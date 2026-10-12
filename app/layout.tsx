@@ -15,7 +15,7 @@ export const viewport: Viewport = { themeColor: "#F4F4F1", width: "device-width"
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={GeistSans.variable}>
-      <body>{children}</body>
+        <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

@@ -210,7 +210,7 @@ export default function AddPage() {
                 {notice && (
                     <div key={tries} role={notice.kind === "error" ? "alert" : "status"}
                         className={notice.kind === "error" ? "alert" : "ok"}>{notice.text}</div>
-                )};
+                )}
 
                 <details><summary className="muted">Raw OCR text</summary><pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{text}</pre></details>
                 <button type="button" className="btn" onClick={onSave} disabled={saving || busy}>
