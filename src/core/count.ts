@@ -1,5 +1,5 @@
 export type Box = { xmin: number; ymin: number; xmax: number; ymax: number};
-type  Detection = { label: string; score: number; box: Box};
+export type  Detection = { label: string; score: number; box: Box};
 
 //Intersection over Union
 // overlap area / union area, 0 if union is 0
