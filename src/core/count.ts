@@ -37,7 +37,7 @@ export function countItems(dets: Detection[], label: string, minScore = 0.1, max
     //keep only the selected food's boxes
     const selected: Detection[] = [];
     for (const d of dets) {
-        if (d.label === label && d.score > minScore) 
+        if (d.label === label && d.score >= minScore) 
             selected.push(d);
     }
 
