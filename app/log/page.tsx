@@ -25,6 +25,7 @@ export default function LogPage() {
     const [image, setImage] = useState<string | null>(null);
     const [status, setStatus] = useState("");
     const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
+    const [picked, setPicked] = useState<Set<number>>(new Set());
 
     function call<T>(msg: object): Promise<T> {
         return new Promise((resolve, reject) => {
