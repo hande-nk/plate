@@ -172,7 +172,7 @@ export default function LogPage() {
 
             <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center"}}>
                 {busy ? "Matching..." : "Snap your plate"}
-                <input type="file" accept="image/*" capture="environment" onChange={onSnap} disabled={busy || dishes.length === 0} hidden />
+                <input type="file" accept="image/jpeg,image/png" capture="environment" onChange={onSnap} disabled={busy || dishes.length === 0} hidden />
             </label>
             {notice && (
                 <div key={tries} role={notice.kind === "error" ? "alert" : "status"}

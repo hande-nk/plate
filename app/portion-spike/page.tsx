@@ -52,8 +52,9 @@ export default function PortionSpike() {
         }; 
         // Test 1
         const params = new URLSearchParams(window.location.search);
-        const device = (params.get("device") ?? "webgpu") as "webgpu" | "wasm";
-        const dtype = params.get("dtype") ?? "fp32";
+        const isPhone = /iPhone|iPad|Android/i.test(navigator.userAgent);
+        const device = (params.get("device") ?? (isPhone ? "wasm" : "webgpu")) as "webgpu" | "wasm";
+        const dtype = params.get("dtype") ?? (isPhone ? "q8" : "fp32");
         w.postMessage({ type: "load", model: "onnx-community/grounding-dino-tiny-ONNX", device, dtype });
         return () => w.terminate();
     }, [ready]);
@@ -91,7 +92,7 @@ export default function PortionSpike() {
                 style={{ display: "block", width: "100%", boxSizing: "border-box", minHeight:44, fontSize:17, marginTop:6}} />
             </label>
 
-            <input type="file" accept="image/*" onChange={onSnap} />
+            <input type="file" accept="image/jpeg,image/png" onChange={onSnap} />
 
             {count !== null && (
                 <div className="card">
