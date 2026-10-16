@@ -26,12 +26,27 @@ self.onmessage = async (e: MessageEvent<Msg>) => {
             //downloads OWL-ViT and builds the detector
             //zero-shot: finds objects from a text description with no training on food
             const t0 = performance.now();
-            detector = (await pipeline("zero-shot-object-detection", msg.model, {
-                device: msg.device,
-                dtype: msg.dtype,
-                progress_callback: (p: unknown) => self.postMessage({ type: "progress", p}),
-            })) as ZeroShotObjectDetectionPipeline;
-            self.postMessage({ type: "loaded", ms: performance.now() - t0 });
+            const attempts: { device: "webgpu" | "wasm"; dtype: "fp32" | "fp16" | "q8" | "q4" }[] =
+                            msg.device === "webgpu"
+                            ? [{ device: "webgpu", dtype: "fp32" }, { device: "wasm", dtype: "q8" }]
+                            : [{ device: "wasm", dtype: msg.dtype }];
+            let lastErr: unknown = null;
+            const errors: string[] = [];
+            for (const a of attempts) {
+                try {
+                detector = (await pipeline("zero-shot-object-detection", msg.model, {
+                    device: a.device,
+                    dtype: a.dtype,
+                    progress_callback: (p: unknown) => self.postMessage({ type: "progress", p }),
+                })) as ZeroShotObjectDetectionPipeline;
+                self.postMessage({ type: "loaded", ms: performance.now() - t0, device: a.device, dtype: a.dtype });
+                return;
+                } catch (err) {
+                    errors.push(`${a.device}/${a.dtype}: ${err instanceof Error ? err.message.slice(0, 120) : String(err)}`);
+                }
+            }
+            throw new Error(errors.join("  |  "));
+
         } else if (msg.type === "detect") {
             //runs the model on the photo
             if (!detector) throw new Error("Detector not loaded");
