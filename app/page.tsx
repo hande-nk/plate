@@ -45,15 +45,15 @@ export default function Today() {
       <Link href="/add" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Add a dish
       </Link>
-
-      <Link href="/spike" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
-        Run the speed test
-      </Link>
       <Link href="/ocr" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Run the ocr test
       </Link>
       <Link href="/log" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Log a meal
+      </Link>
+      <Link href="/spike" className="muted"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "var(--tap)", textDecoration:"none"}}>
+        Run the speed test
       </Link>
       <Link 
         href="/portion-spike"

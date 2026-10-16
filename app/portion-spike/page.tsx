@@ -34,6 +34,13 @@ export default function PortionSpike() {
         workerRef.current = w;
         w.onmessage = (e) => {
             const msg = e.data;
+            if (msg.type === "progress") {
+            const p = msg.p;
+            if (p.status === "progress" && p.file?.endsWith(".onnx"))
+                setStatus(`Downloading model: ${Math.round(p.progress)}%`);
+            if (p.status === "done" && p.file?.endsWith(".onnx"))
+                setStatus("Downloaded. Starting model...");
+            }
             if (msg.type === "loaded")
                 setStatus(`Ready on ${msg.device}/${msg.dtype} (loaded in ${Math.round(msg.ms)} ms)`);
             if(msg.type === "result") {
@@ -44,8 +51,10 @@ export default function PortionSpike() {
             if(msg.type === "error") setStatus(msg.message);
         }; 
         // Test 1
-        const device = "webgpu";
-        w.postMessage({ type: "load", model: "onnx-community/grounding-dino-tiny-ONNX", device, dtype: "fp32" });
+        const params = new URLSearchParams(window.location.search);
+        const device = (params.get("device") ?? "webgpu") as "webgpu" | "wasm";
+        const dtype = params.get("dtype") ?? "fp32";
+        w.postMessage({ type: "load", model: "onnx-community/grounding-dino-tiny-ONNX", device, dtype });
         return () => w.terminate();
     }, [ready]);
 
