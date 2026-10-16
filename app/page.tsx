@@ -55,6 +55,13 @@ export default function Today() {
       <Link href="/log" className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
         Log a meal
       </Link>
+      <Link 
+        href="/portion-spike"
+        className="muted"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "var(--tap)", textDecoration:"none"}}
+      >
+        Portion Test
+      </Link>
       
       <button
         className="muted"

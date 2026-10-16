@@ -67,7 +67,7 @@ export default function PortionSpike() {
         
     }
 
-    const count = ms !== null ? countItems(dets, sentQuery) : null;
+    const count = ms !== null ? countItems(dets, sentQuery, 0.2) : null;
 
     if (!ready) return null;
 
