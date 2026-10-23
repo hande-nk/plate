@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
 
-type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null};
+type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
     { id: "carm", label: "Carm" },
     { id: "dewick", label: "Dewick" },
@@ -25,7 +25,7 @@ export default function LogPage() {
     const [image, setImage] = useState<string | null>(null);
     const [status, setStatus] = useState("");
     const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
-    const [picked, setPicked] = useState<Set<number>>(new Set());
+    const [picked, setPicked] = useState<Map<number, number>>(new Map());
     const [dishes, setDishes] = useState<Dish[]> ([]);
 
 
@@ -76,6 +76,17 @@ export default function LogPage() {
     }, [router]);
 
     function fail(text: string) { setNotice({kind: "error", text: text}); setTries((t) => t + 1); }
+    function toggle(id: number) {
+        setPicked((prev) => {
+            const next = new Map(prev);
+            if(next.has(id)) {
+                next.delete(id);
+            } else {
+                next.set(id, 1);
+            }
+            return next;
+        })
+    }
     
     async function onSnap(e: React.ChangeEvent<HTMLInputElement>) {
         //CLIP matching: Contrastive Language-Image Pretraining
@@ -87,6 +98,7 @@ export default function LogPage() {
         const url = URL.createObjectURL(file);
         setImage(url);
         setRanked([]);
+        setPicked(new Map());
         setNotice(null);
         setBusy(true);
 
@@ -121,7 +133,7 @@ export default function LogPage() {
         if(!ready) return; //waiting for the login check
         supabase
             .from("dishes")
-            .select("id, name, kcal, protein_g, carbs_g, fat_g")
+            .select("id, name, kcal, protein_g, carbs_g, fat_g, count_per_serving")
             .eq("hall", hall) //only this hall's dishes
             .then(({data, error}) => {
                 if (error) fail(error.message);
@@ -176,12 +188,24 @@ export default function LogPage() {
 
             {image && <img src={image} alt="" style={{width: "100%", borderRadius: 14}} /> }
 
-            {ranked.map(({ dish, p}) => (
-                <button key={dish.id} type="button" className="card" style={{ textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>
-                    <div style={{ fontWeight: 500}}>{dish.name}</div>
-                    <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
-                </button>
-            ))}
+            {ranked.map(({ dish, p }) => {
+                const isPicked = picked.has(dish.id);
+                return (
+                    <button key={dish.id} type="button" className="card" 
+                            aria-pressed={isPicked}
+                            onClick={() => toggle(dish.id)}
+                            style={{ 
+                                textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                                border: isPicked ? "1px solid var(--matcha-line)" : undefined,
+                                background: isPicked ? "var(--matcha)" : undefined,
+                            }}>
+                        <div style={{ fontWeight: 500}}>{dish.name}</div>
+                        <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
+                    </button>
+
+                );
+
+            })}
         </main>
         
     );
