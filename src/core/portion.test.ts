@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { protionFromCount, scaleDish } from "./portion";
+import { portionFromCount, scaleDish } from "./portion";
 
-describe("protionFromCount", () => {
-    it("2 of 4 per serving is half", () => expect(protionFromCount(2, 4)).toBe(0.5));
-    it("5 of 4 per serving is 1.25", () => expect(protionFromCount(5, 4)).toBe(1.25));
-    it("3 of 1 per serving is 3", () => expect(protionFromCount(3, 1)).toBe(3));
-    it("0 pieces is 0", () => expect(protionFromCount(0, 4)).toBe(0));
-    it("rejects perServing of 0", () => expect(() => protionFromCount(2, 0)).toThrow());
-    it("rejects a negative count", () => expect(() => protionFromCount(-1, 4)).toThrow());
-    it("rejects half a piece", () => expect(() => protionFromCount(1.5, 4)).toThrow()); 
+describe("portionFromCount", () => {
+    it("2 of 4 per serving is half", () => expect(portionFromCount(2, 4)).toBe(0.5));
+    it("5 of 4 per serving is 1.25", () => expect(portionFromCount(5, 4)).toBe(1.25));
+    it("3 of 1 per serving is 3", () => expect(portionFromCount(3, 1)).toBe(3));
+    it("0 pieces is 0", () => expect(portionFromCount(0, 4)).toBe(0));
+    it("rejects perServing of 0", () => expect(() => portionFromCount(2, 0)).toThrow());
+    it("rejects a negative count", () => expect(() => portionFromCount(-1, 4)).toThrow());
+    it("rejects half a piece", () => expect(() => portionFromCount(1.5, 4)).toThrow()); 
 });
 
 describe("scaleDish", () => {
