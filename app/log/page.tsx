@@ -99,7 +99,8 @@ export default function LogPage() {
 
             //3. ids back to dishes, keep the top 3
             const byId = new Map(dishes.map((d) => [String(d.id), d]));
-            setRanked(scored.slice(0, -1).map((s) => ({ dish: byId.get(s.dishId)!, p: s.p})));
+            //Show the top 8
+            setRanked(scored.slice(0, 8).map((s) => ({ dish: byId.get(s.dishId)!, p: s.p})));
             setStatus(`Matched in ${Math.round(res.ms)} ms`);
         } catch (err) {
             fail (err instanceof Error ? err.message : String(err));
