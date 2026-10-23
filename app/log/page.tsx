@@ -13,6 +13,13 @@ const HALLS: { id: Hall; label: string } [] = [
     { id: "hodge", label: "Hodge" },
     { id: "kindlevan", label:"Kindlevan" },
 ];
+const PORTIONS = [
+    { value: 0.5, label: "0.5" },
+    { value: 1, label: "1" },
+    { value: 1.5, label: "1.5" },
+    { value: 2, label: "2" },
+
+];
 
 export default function LogPage() {
     const worker = useRef<Worker | null>(null);
@@ -84,6 +91,14 @@ export default function LogPage() {
             } else {
                 next.set(id, 1);
             }
+            return next;
+        })
+    }
+
+    function setPortion(id: number, portion: number) {
+        setPicked((prev) => {
+            const next = new Map(prev);
+            next.set(id, portion);
             return next;
         })
     }
@@ -190,18 +205,45 @@ export default function LogPage() {
 
             {ranked.map(({ dish, p }) => {
                 const isPicked = picked.has(dish.id);
+                const portion = picked.get(dish.id);
                 return (
-                    <button key={dish.id} type="button" className="card" 
-                            aria-pressed={isPicked}
-                            onClick={() => toggle(dish.id)}
-                            style={{ 
-                                textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                                border: isPicked ? "1px solid var(--matcha-line)" : undefined,
-                                background: isPicked ? "var(--matcha)" : undefined,
-                            }}>
-                        <div style={{ fontWeight: 500}}>{dish.name}</div>
-                        <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
-                    </button>
+                    <div key={dish.id} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <button key={dish.id} type="button" className="card" 
+                                aria-pressed={isPicked}
+                                onClick={() => toggle(dish.id)}
+                                style={{ 
+                                    textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                                    border: isPicked ? "1px solid var(--matcha-line)" : undefined,
+                                    background: isPicked ? "var(--matcha)" : undefined,
+                                }}>
+                            <div style={{ fontWeight: 500}}>{dish.name}</div>
+                            <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
+                        </button>
+
+
+                        {isPicked && (
+                            <div role="group" aria-label={`Servings of ${dish.name}`}
+                                style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)",  gap: 8 }}>
+                                {PORTIONS.map((o) => {
+                                    const chosen = portion == o.value;
+                                    return (
+                                        <button key={o.label} type="button"
+                                            aria-pressed={chosen}
+                                            onClick={() => setPortion(dish.id, o.value)}
+                                            style={{
+                                                minHeight: "var(--tap)", borderRadius: "var(--radius-control)",
+                                                fontSize: 15, fontFamily: "inherit", cursor: "pointer", color: "var(--ink)",
+                                                border: chosen ? "1px solid var(--matcha-line)" : "1px solid var(--hairline)",
+                                                background: chosen ? "var(--matcha)" : "var(--card)",
+                                                }} >
+                                            {o.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                        )}
+                    </div>
 
                 );
 
