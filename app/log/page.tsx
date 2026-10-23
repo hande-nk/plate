@@ -171,6 +171,45 @@ export default function LogPage() {
         0
     );
 
+    async function onLog() {
+        setBusy(true);
+        setNotice(null);
+
+        //who is logged in: RLS only accepts rows with currect user_id
+        const { data: { session }} = await supabase.auth.getSession();
+        if(!session) { router.replace("/login"); return;}
+
+        const now = new Date().toISOString(); // every dish in this meal gets the same time
+        const rows = items.map(({ dish, portion }) => {
+            const s = scaleDish(dish, portion);
+            return {
+                user_id: session.user.id,
+                eaten_at: now,
+                route: "plate",
+                dish_id: dish.id,
+                dish_name: dish.name,
+                portion,
+                kcal: s.kcal,
+                protein_g: s.protein_g,
+                carbs_g: s.carbs_g,
+                fat_g: s.fat_g,
+
+            }
+        });
+
+        const { error } = await supabase.from("meals").insert(rows);
+        setBusy(false);
+
+        if (error){
+            fail ( error.message); return;
+        }
+
+        setNotice({ kind: "ok", text: `Logged ${rows.length} items • ${totalKcal} kcal`});
+        setPicked(new Map());
+
+
+    }
+
     return (
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="muted">Log a meal</div>
@@ -199,12 +238,8 @@ export default function LogPage() {
                     );
                 })}
             </div>
-            
-            {items.length > 0 && (
-                <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                    <div>{items.length} {items.length === 1 ? "item" : "items"} • {totalKcal} kcal</div>
-                </div>
-            )}
+
+
             <div className="muted">{dishes.length} dishes at {HALLS.find((h) => h.id === hall)?.label} </div>
 
             <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -266,6 +301,15 @@ export default function LogPage() {
                 );
 
             })}
+
+            {items.length > 0 && (
+                <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                    <div>{items.length} {items.length === 1 ? "item" : "items"} • {totalKcal} kcal</div>
+                    <button type="button" className="btn" onClick={onLog} disabled={busy}>
+                        {busy ? "Saving..." : `Log ${items.length}`}
+                    </button>
+                </div>
+            )}
 
             
         </main>
