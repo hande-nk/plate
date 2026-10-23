@@ -5,6 +5,7 @@ import type { Hall } from "@/core/router";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
+import { scaleDish } from "@/core/portion";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -146,6 +147,7 @@ export default function LogPage() {
     }
     useEffect(() => {
         if(!ready) return; //waiting for the login check
+
         supabase
             .from("dishes")
             .select("id, name, kcal, protein_g, carbs_g, fat_g, count_per_serving")
@@ -157,6 +159,17 @@ export default function LogPage() {
     }, [ready, hall]); //rerun when the hall changes
 
     if (!ready) return null;
+    
+    //the picked dishes, each with its portion
+    const items = ranked 
+        .filter((r) => picked.has(r.dish.id))
+        .map((r) => ({ dish: r.dish, portion: picked.get(r.dish.id)! }));
+        
+    //add up kcal across all picked dishes
+    const totalKcal = items.reduce(
+        (sum, it) => sum + scaleDish(it.dish, it.portion).kcal,
+        0
+    );
 
     return (
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -187,6 +200,11 @@ export default function LogPage() {
                 })}
             </div>
             
+            {items.length > 0 && (
+                <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+                    <div>{items.length} {items.length === 1 ? "item" : "items"} • {totalKcal} kcal</div>
+                </div>
+            )}
             <div className="muted">{dishes.length} dishes at {HALLS.find((h) => h.id === hall)?.label} </div>
 
             <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -248,6 +266,8 @@ export default function LogPage() {
                 );
 
             })}
+
+            
         </main>
         
     );
