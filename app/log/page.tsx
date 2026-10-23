@@ -26,6 +26,8 @@ export default function LogPage() {
     const [status, setStatus] = useState("");
     const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
     const [picked, setPicked] = useState<Set<number>>(new Set());
+    const [dishes, setDishes] = useState<Dish[]> ([]);
+
 
     function call<T>(msg: object): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -52,10 +54,17 @@ export default function LogPage() {
         const gpu = "gpu" in navigator; 
 
         setStatus("Loading the matcher (first time downloading it)...");
-        await call({ 
-            type: "load", model: "Xenova/clip-vit-base-patch32",
-            device: gpu ? "webgpu" : "wasm", dtype: gpu ? "fp16" : "q8"
-        });
+        try {
+            await call({ 
+                type: "load", model: "Xenova/clip-vit-base-patch32",
+                device: gpu ? "webgpu" : "wasm", dtype: gpu ? "fp16" : "q8"
+            });
+        } catch (err) {
+            worker.current?.terminate();
+            worker.current = null;
+            throw err;
+        }
+        
     }
     
     useEffect(() => {
@@ -97,7 +106,6 @@ export default function LogPage() {
             const prior = buildPrior((past ?? []).map((m) => String(m.dish_id)), Object.keys(sims));
             const scored = scoreDishes(sims, prior);
 
-            //3. ids back to dishes, keep the top 3
             const byId = new Map(dishes.map((d) => [String(d.id), d]));
             //Show the top 8
             setRanked(scored.slice(0, 8).map((s) => ({ dish: byId.get(s.dishId)!, p: s.p})));
@@ -109,10 +117,6 @@ export default function LogPage() {
         }
 
     }
-
-
-    const [dishes, setDishes] = useState<Dish[]> ([]);
-
     useEffect(() => {
         if(!ready) return; //waiting for the login check
         supabase
@@ -129,7 +133,7 @@ export default function LogPage() {
 
     return (
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
-            <div className="muted"> Log a meal</div>
+            <div className="muted">Log a meal</div>
             <h1 style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: "-0.02em" }}>
                 What's on your plate?
             </h1>
@@ -155,30 +159,29 @@ export default function LogPage() {
                     );
                 })}
             </div>
-
-            {ranked.map(({ dish, p }) => (
-                <button key={dish.id} type="button" className="card" style={{ textAlign: "left", cursor: "pointer", fontFamily: "inherit"}}>
-                    <div style={{ fontWeight:500 }}>{dish.name}</div>
-                    <div className="muted">{dish.kcal} kcal · {Math.round(p * 100)}% match </div>
-                </button>
-            ))}
             
-            {image && <img src={image} alt="" style={{ width: "100%", borderRadius: 14}} /> }
-            
-            
+            <div className="muted">{dishes.length} dishes at {HALLS.find((h) => h.id === hall)?.label} </div>
 
-            
-
-            <div className="muted">{dishes.length} dishes at  {HALLS.find((h) => h.id === hall)?.label}</div>
-
-            <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center"}}>
+            <label className="btn" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {busy ? "Matching..." : "Snap your plate"}
-                <input type="file" accept="image/jpeg,image/png" capture="environment" onChange={onSnap} disabled={busy || dishes.length === 0} hidden />
+                <input type="file" accept="image/jpeg,image/png" onChange={onSnap} disabled={busy || dishes.length === 0} hidden />
             </label>
-            {notice && (
+
+            {status && <div className="muted">{status}</div>}
+
+            {notice  && (
                 <div key={tries} role={notice.kind === "error" ? "alert" : "status"}
                     className={notice.kind === "error" ? "alert" : "ok"}>{notice.text}</div>
             )}
+
+            {image && <img src={image} alt="" style={{width: "100%", borderRadius: 14}} /> }
+
+            {ranked.map(({ dish, p}) => (
+                <button key={dish.id} type="button" className="card" style={{ textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>
+                    <div style={{ fontWeight: 500}}>{dish.name}</div>
+                    <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
+                </button>
+            ))}
         </main>
         
     );
