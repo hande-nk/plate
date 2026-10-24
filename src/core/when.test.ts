@@ -42,3 +42,22 @@ describe("choicesFor", () => {
     expect(choicesFor(at(21))).toEqual(["now", "breakfast", "lunch", "dinner"]);
   });
 });
+
+describe("eatenAt with a picked time", () => {
+  it("a 15:40 snack at 5pm means 15:40 today", () => {
+    expect(eatenAt({ at: "15:40" }, at(17)).getTime()).toBe(at(15, 40).getTime());
+  });
+  it("single-digit hours work", () => {
+    expect(eatenAt({ at: "7:05" }, at(9)).getTime()).toBe(at(7, 5).getTime());
+  });
+  it("a picked time later than now becomes now", () => {
+    expect(eatenAt({ at: "22:00" }, at(16)).getTime()).toBe(at(16).getTime());
+  });
+  it("throws on a time that doesn't exist", () => {
+    expect(() => eatenAt({ at: "25:00" }, at(16))).toThrow();
+    expect(() => eatenAt({ at: "12:75" }, at(16))).toThrow();
+  });
+  it("throws on garbage", () => {
+    expect(() => eatenAt({ at: "noon" }, at(16))).toThrow();
+  });
+});
