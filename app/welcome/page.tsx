@@ -108,7 +108,7 @@ export default function Welcome() {
         const uid = session.user.id;
 
         const { error: pErr } = await supabase.from("profiles").upsert({
-            id: uid,
+            user_id: uid,
             height_cm: Number(height),
             age_year: Number(age),
             activity,
@@ -122,7 +122,7 @@ export default function Welcome() {
             friends: false,
             hide_numbers: hideNumbers,
             onboarded_ad: new Date().toISOString(),
-        });
+        }, { onConflict: "user_id" }); // update my row if it exists, otherwise create it
         if (pErr) { setBusy(false); return fail(pErr.message); }
 
 

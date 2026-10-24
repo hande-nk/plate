@@ -68,7 +68,7 @@ export default function Weigh() {
     const next = !hide;
     setHide(next);
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) await supabase.from("profiles").update({ hide_weight: next }).eq("id", session.user.id);
+    if (session) await supabase.from("profiles").update({ hide_weight: next }).eq("user_id", session.user.id);
   }
 
   async function save() {
