@@ -110,7 +110,7 @@ export default function Welcome() {
         const { error: pErr } = await supabase.from("profiles").upsert({
             user_id: uid,
             height_cm: Number(height),
-            age_year: Number(age),
+            age: Number(age),
             activity,
             pace,
             avoids,
