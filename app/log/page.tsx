@@ -279,8 +279,8 @@ export default function LogPage() {
                                 onClick={() => toggle(dish.id)}
                                 style={{ 
                                     textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                                    // border: isPicked ? "1px solid var(--matcha-line)" : undefined,
-                                    // background: isPicked ? "var(--matcha)" : undefined,
+                                    border: isPicked ? "1px solid var(--matcha-line)" : undefined,
+                                    background: isPicked ? "var(--matcha)" : undefined,
                                 }}>
                             <div style={{ fontWeight: 500}}>{dish.name}</div>
                             <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>

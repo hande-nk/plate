@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { dayTotals } from "@/core/day";
 import { PlatePhoto } from "@/components/PlatePhoto";
+import { startOfWeek, weekWins } from "@/core/week";
+import { WinCard } from "@/components/WinCard";
 import Link from "next/link";
 
 type Meal = {
@@ -51,12 +53,12 @@ export default function Today() {
   //today's meals, from midnight on this phone
   useEffect(() => {
     if(!ready) return;
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    //const start = new Date();
+    //start.setHours(0, 0, 0, 0);
     supabase
       .from("meals")
       .select("id, eaten_at, dish_name, portion, kcal, protein_g, carbs_g, fat_g, photo_key")
-      .gte("eaten_at", start.toISOString())
+      .gte("eaten_at", startOfWeek(new Date()).toISOString())
       .order("eaten_at", {ascending: false })
       .then(({ data, error }) => {
         if (error) setError(error.message);
@@ -66,7 +68,14 @@ export default function Today() {
 
   if (!ready) return null;
 
-  const list = meals ?? [];
+  const week = meals ?? [];// everything since Monday
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const list = week.filter((m) => new Date(m.eaten_at) >= midnight);   // just today
+
+  // One time per plate (dishes saved together share eaten_at), for the Small win card.
+  const plateTimes = Array.from(new Set(week.map((m) => m.eaten_at))).map((t) => new Date(t));
+  const win = weekWins(plateTimes, new Date());
   const totals = dayTotals(list);
 
 
@@ -119,6 +128,8 @@ export default function Today() {
           </article>
         );
       })}
+
+      {win.count > 0 && <WinCard count={win.count} days={win.days} />}
 
       <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none" }}>
         <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanim • case file 1</div>
