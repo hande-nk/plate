@@ -61,7 +61,8 @@ export default function LogPage() {
     async function getWorker() {
         if(worker.current) return;
         worker.current = new Worker(new URL("../../src/workers/matcher.worker.ts", import.meta.url), {type: "module"});
-        const gpu = "gpu" in navigator; 
+        const isPhone = /iPhone|iPad|Android/i.test(navigator.userAgent);
+        const gpu = "gpu" in navigator && !isPhone; // phone GPUs run out of memory on these models
 
         setStatus("Loading the matcher (first time downloading it)...");
         try {
@@ -114,7 +115,8 @@ export default function LogPage() {
         setPhoto(file);
 
 
-        const url = URL.createObjectURL(file);
+        const small = await shrinkPhoto(file);      // 1080 px, plenty for CLIP and the preview
+        const url = URL.createObjectURL(small);
         setImage(url);
         setRanked([]);
         setPicked(new Map());
