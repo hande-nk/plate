@@ -76,5 +76,54 @@ body {
 
 /* Small label chip on feed cards (v3 "Your best-feeling combo" style). */
 .pill { justify-self: start; font-size: 13px; padding: 6px 12px; border-radius: 999px; background: var(--paper); color: var(--ink); }
+
+/* ---- v3 forms: Welcome and Morning weigh-in ---- */
+.screen { max-width: 430px; margin: 0 auto; padding: 40px 18px 32px; display: flex; flex-direction: column; gap: 14px; }
+.title { margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; text-wrap: balance; }
+.q { font-size: 15px; font-weight: 500; margin-top: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Two-step progress bars at the top of Welcome */
+.steps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.steps i { height: 3px; border-radius: 2px; background: var(--hairline); }
+.steps i.on { background: var(--ink); }
+
+/* Labeled inputs (Height, Weight, Age) */
+.field { position: relative; display: grid; gap: 6px; font-size: 13px; color: var(--stone); }
+.field input { min-height: var(--tap); width: 100%; padding: 0 12px; border: 1px solid var(--hairline); border-radius: var(--radius-control);
+  background: var(--card); color: var(--ink); font: inherit; font-size: 17px; }
+.field input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.field .unit { position: absolute; right: 12px; bottom: 12px; font-size: 15px; pointer-events: none; }
+
+/* Option rows (pace) and option cards (what keeps you going): ink outline when chosen */
+.option { min-height: 52px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 16px; text-align: left;
+  border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--card); color: var(--ink); font-size: 16px; cursor: pointer; }
+.option.stack { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 12px 14px; }
+.option[aria-checked="true"], .option[aria-pressed="true"] { border: 2px solid var(--ink); padding-inline: 15px; }
+.option.stack[aria-pressed="true"] { padding: 11px 13px; }
+
+/* Chips (food limits) */
+.chip { min-height: var(--tap); padding: 0 16px; border-radius: 999px; border: 1px solid var(--hairline); background: var(--card); color: var(--ink); font-size: 15px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* Settings rows with switches */
+.list { display: grid; padding: 4px 16px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; font-size: 16px; }
+.list .row + .row { border-top: 1px solid var(--hairline); }
+.switch { flex: none; position: relative; width: 51px; min-height: 31px; height: 31px; border-radius: 16px; border: none; background: var(--hairline); cursor: pointer; padding: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 25px; height: 25px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+.switch[aria-checked="true"] { background: var(--ink); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+.switch:disabled { opacity: .5; cursor: default; }
+
+/* Weigh-in: the big number and the round − + buttons */
+.big-number { width: 4.2ch; border: none; background: none; color: var(--ink); font: 500 72px/1 var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: -0.04em; text-align: center; font-variant-numeric: tabular-nums; padding: 0; }
+.big-number:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; border-radius: 8px; }
+.big-number.masked { -webkit-text-security: disc; }
+.round { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--card); color: var(--ink); font-size: 22px; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+
 @keyframes nudge { 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
 @media (prefers-reduced-motion: reduce) { .alert { animation: none } }
