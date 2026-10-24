@@ -335,10 +335,10 @@ export default function LogPage() {
                 </button>
             ))}
             <label className="choice time-chip" data-on={typeof when === "object"}>
-                {typeof when === "object" ? prettyTime(when.at) : "Other"}
+                <span>{typeof when === "object" ? prettyTime(when.at) : "Other"}</span>
                 <input
                 type="time"
-                aria-label="Other time"
+                aria-label="Other"
                 value={typeof when === "object" ? when.at : ""}
                 onChange={(e) => e.target.value && setWhen({ at: e.target.value })}
                 />

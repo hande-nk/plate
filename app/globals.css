@@ -124,8 +124,8 @@ body {
 .round { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--card); color: var(--ink); font-size: 22px; cursor: pointer; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.time-chip { position: relative; }
-.time-chip input { position: absolute; inset: 0; width: 100%; opacity: 0; }
+.choice.time-chip { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; overflow: hidden; }
+.choice.time-chip input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; margin: 0; -webkit-appearance: none; appearance: none; font-size: 16px; }
 .choice[data-on="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
