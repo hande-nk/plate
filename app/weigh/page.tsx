@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { runTrend } from "@/core/kalman";
+import { localDay } from "@/lib/day";
 
-type WeighIn = { weighed_at: string; kg: number };
+type WeighIn = { day: string; kg: number };
 const DAY_MS = 86_400_000;
 
 // 14-day chart: grey dots are scale readings, the green line is the Kalman trend.
@@ -46,10 +47,10 @@ export default function Weigh() {
 
   useEffect(() => {
     if (!ready) return;
-    const since = new Date(Date.now() - 14 * DAY_MS).toISOString();
-    supabase.from("weigh_ins").select("weighed_at, kg").gte("weighed_at", since).order("weighed_at")
-      .then(({ data }) => {
-        const rows = (data ?? []).map((r) => ({ weighed_at: r.weighed_at, kg: Number(r.kg) }));
+    const since = localDay(new Date(Date.now() - 14 * DAY_MS));
+    supabase.from("weigh_ins").select("day, kg").gte("day", since).order("day")
+        .then(({ data }) => {
+            const rows = (data ?? []).map((r) => ({ day: r.day as string, kg: Number(r.kg) }));
         setHistory(rows);
         if (rows.length) setValue(rows[rows.length - 1].kg.toFixed(1)); // start from the last reading
       });
@@ -77,7 +78,8 @@ export default function Weigh() {
     setBusy(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.replace("/login"); return; }
-    const { error } = await supabase.from("weigh_ins").insert({ user_id: session.user.id, kg });
+    const { error } = await supabase.from("weigh_ins")
+                                    .upsert({ user_id: session.user.id, day: localDay(), kg }, { onConflict: "user_id,day" });
     setBusy(false);
     if (error) return fail(error.message);
     router.push("/");
@@ -86,7 +88,7 @@ export default function Weigh() {
   if (!ready) return null;
 
   // Days are fractional, so a skipped morning is just a bigger gap for the filter.
-  const points = history.map((h) => ({ day: new Date(h.weighed_at).getTime() / DAY_MS, kg: h.kg }));
+  const points = history.map((h) => ({ day: Math.round(new Date(`${h.day}T12:00`).getTime() / DAY_MS), kg: h.kg }));
   const trend = points.length >= 2 ? runTrend(points).map((s) => s.w) : [];
   const change = trend.length ? trend[trend.length - 1] - trend[0] : 0;
   const now = new Date();
