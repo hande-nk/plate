@@ -335,7 +335,7 @@ export default function LogPage() {
                 </button>
             ))}
             <label className="choice time-chip" data-on={typeof when === "object"}>
-                {typeof when === "object" ? prettyTime(when.at) : "Other time"}
+                {typeof when === "object" ? prettyTime(when.at) : "Other"}
                 <input
                 type="time"
                 aria-label="Other time"
