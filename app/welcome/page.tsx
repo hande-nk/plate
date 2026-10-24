@@ -38,13 +38,9 @@ function flip(list: string[], item: string): string[] {
 function Toggle({label, note, on, onChange, disabled }: { label: string; note?: string; on: boolean; onChange?: (v: boolean) => void; disabled?: boolean}) {
     return (
         <div className="row">
-            <span>{label}{note && 
-                <span className="muted" style={{ fontSize: 15 }}> 
-                    {note}
-                </span>}
-                <button type="button" role="switch" aria-checked={on} aria-label={label} className="switch"
-                        disabled={disabled} onClick={() => onChange?.(!on)} />
-            </span>
+            <span>{label}{note && <span className="muted" style={{ fontSize: 15 }}> {note}</span>}</span>
+            <button type="button" role="switch" aria-checked={on} aria-label={label} className="switch"
+                    disabled={disabled} onClick={() => onChange?.(!on)} />
         </div>
     );
 }
@@ -101,7 +97,7 @@ export default function Welcome() {
     }
 
     async function finish() {
-        if (hideNumbers === null) return fail("Answer the last question so Safiye Hanim knows the right numbers.");
+        if (hideNumbers === null) return fail("Answer the last question so Plate knows the right numbers.");
         setBusy(true);
         setNotice(null);
         const { data: { session } } = await supabase.auth.getSession();
@@ -117,13 +113,13 @@ export default function Welcome() {
             pace,
             avoids,
             allergy_note: avoids.includes("Allergy") ? allergy.trim() || null: null,
-            motivation,
+            motivations: motivation,
             lunch_nudge: lunchNudge,
-            wigh_reminder: weighReminder,
+            weigh_reminder: weighReminder,
             sunday_edition: edition,
             friends: false,
             hide_numbers: hideNumbers,
-            onboarded_ad: new Date().toISOString(),
+            onboarded_at: new Date().toISOString(),
         }, { onConflict: "user_id" }); // update my row if it exists, otherwise create it
         if (pErr) { setBusy(false); return fail(pErr.message); }
 
@@ -143,7 +139,7 @@ export default function Welcome() {
     return (
         <main className="screen">
             <div className="steps" aria-hidden="true">
-                <i className={step === 2 ? "on" : ""} />
+                <i className="on" /><i className={step === 2 ? "on" : ""} />
             </div>
             
             <div className="muted"> Welcome • {step} of 2 </div>
@@ -171,7 +167,7 @@ export default function Welcome() {
 
                     <div className="q"> How active is a normal week?</div>
                    
-                    <div role="group" aria-label="Activity" style={{ display: "grid", gridTemplateColumns: "repeate(3, 1fr)", gap: 8 }}>
+                    <div role="group" aria-label="Activity" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                         {ACTIVITY.map((o) => (
                             <button key={o.id} type="button" className="choice" aria-pressed={activity === o.id} onClick={() => setActivity(o.id)}>{o.label}</button>
                         ))}

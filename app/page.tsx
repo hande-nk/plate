@@ -96,10 +96,10 @@ export default function Today() {
       <h1 style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: "-0.02em" }}>Hi Hande.</h1>
 
       {/* One card, three numbers, like the v3 Today strip */}
-      <div className="card" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", padding: "14px 0" }}>
-        <Stat label="Eaten" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />
-        <Stat label="Protein" value={totals.protein_g === null ? "-" : String(totals.protein_g)} unit="g" divider />
-        <Stat label="Plates" value={String(plates.size)} divider />
+      <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "1fr" : "repeat(3, 1fr)", padding: "14px 0" }}>
+        {!hideNumbers && <Stat label="Eaten" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />}
+        {!hideNumbers && <Stat label="Protein" value={totals.protein_g === null ? "-" : String(totals.protein_g)} unit="g" divider />}
+        <Stat label="Plates" value={String(plates.size)} divider={!hideNumbers} />
       </div>
 
       {error && <div className="alert" role="alert">{error}</div> }
@@ -126,7 +126,7 @@ export default function Today() {
               <span className="pill">{time}</span>
               <div style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.3 }}>{names}</div>
               <div className="muted" style={{ fontSize: 15 }}>
-                {dayTotals(rows).kcal} kcal · {rows.length} {rows.length === 1 ? "item" : "items"}
+                {!hideNumbers && `${dayTotals(rows).kcal} kcal • `}{rows.length} {rows.length === 1 ? "item" : "items"}
               </div>
             </div>
           </article>
