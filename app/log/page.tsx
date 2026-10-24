@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
 import { scaleDish } from "@/core/portion";
+import { shrinkPhoto, savePhoto } from "@/lib/photos";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -35,6 +36,7 @@ export default function LogPage() {
     const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
     const [picked, setPicked] = useState<Map<number, number>>(new Map());
     const [dishes, setDishes] = useState<Dish[]> ([]);
+    const [photo, setPhoto] = useState<File | null>(null);
 
 
     function call<T>(msg: object): Promise<T> {
@@ -109,6 +111,7 @@ export default function LogPage() {
 
         const file = e.target.files?.[0];
         if(!file) return;
+        setPhoto(file);
 
 
         const url = URL.createObjectURL(file);
@@ -180,6 +183,13 @@ export default function LogPage() {
         if(!session) { router.replace("/login"); return;}
 
         const now = new Date().toISOString(); // every dish in this meal gets the same time
+
+        let photo_key: string | null = null;
+        try {
+            if (photo) photo_key = await savePhoto(await shrinkPhoto(photo));
+        } catch {
+            // the photo is a bonus: if saving it fails, still log the meal
+        }
         const rows = items.map(({ dish, portion }) => {
             const s = scaleDish(dish, portion);
             return {
@@ -193,7 +203,7 @@ export default function LogPage() {
                 protein_g: s.protein_g,
                 carbs_g: s.carbs_g,
                 fat_g: s.fat_g,
-
+                photo_key,
             }
         });
 
@@ -204,9 +214,11 @@ export default function LogPage() {
             fail ( error.message); return;
         }
 
-        setNotice({ kind: "ok", text: `Logged ${rows.length} items • ${totalKcal} kcal`});
-        setPicked(new Map());
+        //setNotice({ kind: "ok", text: `Logged ${rows.length} items • ${totalKcal} kcal`});
 
+        setPicked(new Map());
+        setPhoto(null);
+        router.push("/");
 
     }
 
@@ -226,12 +238,13 @@ export default function LogPage() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => setHall(h.id)}
-                        style={{
-                        minHeight: "var(--tap)", borderRadius: "var(--radius-control)",
-                        fontSize: 15, fontFamily: "inherit", cursor: "pointer", color: "var(--ink)",
-                        border: selected ? "1px solid var(--matcha-line)" : "1px solid var(--hairline)",
-                        background: selected ? "var(--matcha)" : "var(--card)",
-                        }}
+                        className="choice"
+                        // style={{
+                        // minHeight: "var(--tap)", borderRadius: "var(--radius-control)",
+                        // fontSize: 15, fontFamily: "inherit", cursor: "pointer", color: "var(--ink)",
+                        // border: selected ? "1px solid var(--matcha-line)" : "1px solid var(--hairline)",
+                        // background: selected ? "var(--matcha)" : "var(--card)",
+                        // }}
                     >
                         {h.label}
                     </button>
@@ -266,8 +279,8 @@ export default function LogPage() {
                                 onClick={() => toggle(dish.id)}
                                 style={{ 
                                     textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                                    border: isPicked ? "1px solid var(--matcha-line)" : undefined,
-                                    background: isPicked ? "var(--matcha)" : undefined,
+                                    // border: isPicked ? "1px solid var(--matcha-line)" : undefined,
+                                    // background: isPicked ? "var(--matcha)" : undefined,
                                 }}>
                             <div style={{ fontWeight: 500}}>{dish.name}</div>
                             <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
@@ -278,17 +291,18 @@ export default function LogPage() {
                             <div role="group" aria-label={`Servings of ${dish.name}`}
                                 style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)",  gap: 8 }}>
                                 {PORTIONS.map((o) => {
-                                    const chosen = portion == o.value;
                                     return (
                                         <button key={o.label} type="button"
-                                            aria-pressed={chosen}
+                                            aria-pressed={portion === o.value}
                                             onClick={() => setPortion(dish.id, o.value)}
-                                            style={{
-                                                minHeight: "var(--tap)", borderRadius: "var(--radius-control)",
-                                                fontSize: 15, fontFamily: "inherit", cursor: "pointer", color: "var(--ink)",
-                                                border: chosen ? "1px solid var(--matcha-line)" : "1px solid var(--hairline)",
-                                                background: chosen ? "var(--matcha)" : "var(--card)",
-                                                }} >
+                                            className="choice"
+                                            // style={{
+                                            //     minHeight: "var(--tap)", borderRadius: "var(--radius-control)",
+                                            //     fontSize: 15, fontFamily: "inherit", cursor: "pointer", color: "var(--ink)",
+                                            //     border: chosen ? "1px solid var(--matcha-line)" : "1px solid var(--hairline)",
+                                            //     background: chosen ? "var(--matcha)" : "var(--card)",
+                                            //     }} 
+                                        >
                                             {o.label}
                                         </button>
                                     );

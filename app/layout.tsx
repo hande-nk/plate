@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Plate", statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#F4F4F1", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
