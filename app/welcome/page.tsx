@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Activity } from "@/core/energy";
+import { localDay } from "@/lib/day";
 
 type PaceChoice = "gentle" | "steady" | "track";
 
@@ -85,7 +86,7 @@ export default function Welcome() {
         const h = Number(height), w = Number(weight), a = Number(age);
         if(!(h >= 100 && h <= 250)) return fail("Height should be in cm, between 100 and 250.");
         if(!(w >= 30 && w <= 250)) return fail("Weight should be in kg, between 30 and 250.");
-        if(!(Number.isInteger(a) && a >= 13 && a <= 100)) return fail("Age should be between 13 and 100.");
+        if(!(Number.isInteger(a) && a >= 17 && a <= 100)) return fail("Age should be between 17 and 100.");
         setNotice(null);
         setStep(2);
         window.scrollTo(0,0);
@@ -109,7 +110,8 @@ export default function Welcome() {
 
         const { error: pErr } = await supabase.from("profiles").upsert({
             user_id: uid,
-            height_cm: Number(height),
+            height_cm: Math.round(Number(height)),
+            sex: "female",
             age: Number(age),
             activity,
             pace,
@@ -127,7 +129,8 @@ export default function Welcome() {
 
 
         //the weight from step 1 is the forst pint on the trend line
-        const { error: wErr } = await supabase.from("weigh_ins").insert({ user_id: uid, kg: Number(weight) });
+        const { error: wErr } = await supabase.from("weigh_ins")
+                                                .upsert({ user_id: uid, day: localDay(), kg: Number(weight) }, { onConflict: "user_id,day" });
         setBusy(false);
         if(wErr) return fail(wErr.message);
 
