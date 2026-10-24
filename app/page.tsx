@@ -41,13 +41,17 @@ export default function Today() {
   const [ready, setReady] = useState(false);
   const [meals, setMeals] = useState<Meal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hideNumbers, setHideNumbers] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.replace("/login");
-      else setReady(true);
-
-    });
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if(!data.session) { router.replace("/login"); return; }
+      const { data: prof } = await supabase.from("profiles").select("onboarded_at, hide_numbers").maybeSingle();
+      if(!prof?.onboarded_at) { router.replace("/welcome"); return; }
+      setHideNumbers(Boolean(prof.hide_numbers));
+      setReady(true);
+    })();
   }, [router]);
 
   //today's meals, from midnight on this phone
@@ -155,6 +159,7 @@ export default function Today() {
         <Link href="/" aria-current="page">Home</Link>
         <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/add">Dishes</Link>
+        <Link href="/weigh">Weight</Link>
       </nav>
     </>
   );
