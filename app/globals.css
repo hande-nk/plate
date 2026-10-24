@@ -123,6 +123,11 @@ body {
 .big-number.masked { -webkit-text-security: disc; }
 .round { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--card); color: var(--ink); font-size: 22px; cursor: pointer; }
 
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.time-chip { position: relative; }
+.time-chip input { position: absolute; inset: 0; width: 100%; opacity: 0; }
+.choice[data-on="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
 @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
 
 @keyframes nudge { 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }

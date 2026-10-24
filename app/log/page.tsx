@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
 import { scaleDish } from "@/core/portion";
 import { shrinkPhoto, savePhoto } from "@/lib/photos";
+import { eatenAt, choicesFor, type When } from "@/core/when";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -23,6 +24,13 @@ const PORTIONS = [
 
 ];
 
+const WHEN_LABEL = { now: "Now", breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" } as const;
+
+function prettyTime(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+}
+
 export default function LogPage() {
     const worker = useRef<Worker | null>(null);
     const [ready, setReady] = useState(false);
@@ -35,6 +43,7 @@ export default function LogPage() {
     const [status, setStatus] = useState("");
     const [ranked, setRanked] = useState<{ dish: Dish; p: number} []> ([]);
     const [picked, setPicked] = useState<Map<number, number>>(new Map());
+    const [when, setWhen] = useState<When>("now");
     const [dishes, setDishes] = useState<Dish[]> ([]);
     const [photo, setPhoto] = useState<File | null>(null);
 
@@ -184,7 +193,8 @@ export default function LogPage() {
         const { data: { session }} = await supabase.auth.getSession();
         if(!session) { router.replace("/login"); return;}
 
-        const now = new Date().toISOString(); // every dish in this meal gets the same time
+        const now = new Date(); // every dish in this meal gets the same time
+        const at = eatenAt(when, now).toISOString();
 
         let photo_key: string | null = null;
         try {
@@ -196,7 +206,7 @@ export default function LogPage() {
             const s = scaleDish(dish, portion);
             return {
                 user_id: session.user.id,
-                eaten_at: now,
+                eaten_at: at,
                 route: "plate",
                 dish_id: dish.id,
                 dish_name: dish.name,
@@ -220,6 +230,7 @@ export default function LogPage() {
 
         setPicked(new Map());
         setPhoto(null);
+        setWhen("now");
         router.push("/");
 
     }
@@ -281,8 +292,6 @@ export default function LogPage() {
                                 onClick={() => toggle(dish.id)}
                                 style={{ 
                                     textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                                    border: isPicked ? "1px solid var(--matcha-line)" : undefined,
-                                    background: isPicked ? "var(--matcha)" : undefined,
                                 }}>
                             <div style={{ fontWeight: 500}}>{dish.name}</div>
                             <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
@@ -317,6 +326,24 @@ export default function LogPage() {
                 );
 
             })}
+
+            <div className="q">When did you eat?</div>
+            <div className="chips" role="group" aria-label="When did you eat?">
+            {choicesFor(new Date()).map((c) => (
+                <button key={c as string} type="button" className="choice" aria-pressed={when === c} onClick={() => setWhen(c)}>
+                {WHEN_LABEL[c as keyof typeof WHEN_LABEL]}
+                </button>
+            ))}
+            <label className="choice time-chip" data-on={typeof when === "object"}>
+                {typeof when === "object" ? prettyTime(when.at) : "Other time"}
+                <input
+                type="time"
+                aria-label="Other time"
+                value={typeof when === "object" ? when.at : ""}
+                onChange={(e) => e.target.value && setWhen({ at: e.target.value })}
+                />
+            </label>
+            </div>            
 
             {items.length > 0 && (
                 <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
