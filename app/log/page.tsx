@@ -357,9 +357,6 @@ export default function LogPage() {
                     </button>
                 </div>
             )}
-
-            
         </main>
-        
     );
 }
