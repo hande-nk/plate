@@ -7,6 +7,7 @@ import { dayTotals } from "@/core/day";
 import { PlatePhoto } from "@/components/PlatePhoto";
 import { startOfWeek, weekWins } from "@/core/week";
 import { WinCard } from "@/components/WinCard";
+import FeelingChips, { type Feeling } from "@/components/FeelingChips";
 import Link from "next/link";
 
 type Meal = {
@@ -19,6 +20,7 @@ type Meal = {
   carbs_g: number | null;
   fat_g: number | null;
   photo_key: string | null;
+  feeling: Feeling | null;
 };
 
 
@@ -61,7 +63,7 @@ export default function Today() {
     //start.setHours(0, 0, 0, 0);
     supabase
       .from("meals")
-      .select("id, eaten_at, dish_name, portion, kcal, protein_g, carbs_g, fat_g, photo_key")
+      .select("id, eaten_at, dish_name, portion, kcal, protein_g, carbs_g, fat_g, photo_key, feeling")
       .gte("eaten_at", startOfWeek(new Date()).toISOString())
       .order("eaten_at", {ascending: false })
       .then(({ data, error }) => {
@@ -85,7 +87,10 @@ export default function Today() {
 
   //rows saved together share one eaten_at , so each group is one plate
   const plates = new Map<string, Meal[]>();
-  for (const m of list) plates.set(m.eaten_at, [...(plates.get(m.eaten_at) ?? []), m]);
+  for (const m of list)  {
+    const key = `${m.eaten_at}|${m.photo_key ?? ""}`; // same time + same photo = same plate
+    plates.set(key, [...(plates.get(key) ?? []), m]);
+  }
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric"});
 
@@ -128,10 +133,12 @@ export default function Today() {
               <div className="muted" style={{ fontSize: 15 }}>
                 {!hideNumbers && `${dayTotals(rows).kcal} kcal • `}{rows.length} {rows.length === 1 ? "item" : "items"}
               </div>
+              <FeelingChips mealIds={rows.map((m) => m.id)} initial={rows[0].feeling} />
             </div>
           </article>
         );
       })}
+      
 
       {win.count > 0 && <WinCard count={win.count} days={win.days} />}
 
