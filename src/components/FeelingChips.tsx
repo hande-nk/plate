@@ -12,7 +12,7 @@ const FEELINGS : { id: Feeling; label: string }[] = [
     { id: "hungry", label: "Hungry" },
 ];
 
-export default function FeelingChips({ mealIds, initial }: {mealIds: number[]; initial: Feeling | null }) {
+export default function FeelingChips({ mealIds, initial, onChange }: { mealIds: number[]; initial: Feeling | null; onChange?: (f: Feeling | null) => void }) {
     const [feeling, setFeeling] = useState<Feeling | null>(initial);
     const [failed, setFailed] = useState(false);
 
@@ -20,9 +20,10 @@ export default function FeelingChips({ mealIds, initial }: {mealIds: number[]; i
         const prev = feeling;
         const next = prev === f ? null : f; //tap again to undo
         setFeeling(next);
+        onChange?.(next);
         setFailed(false);
         const { error } = await supabase.from("meals").update({ feeling: next }).in("id", mealIds);
-        if (error) { setFeeling(prev); setFailed(true); }
+        if (error) { setFeeling(prev); onChange?.(prev); setFailed(true); }
     }
 
     const label =FEELINGS.find((x) => x.id === feeling)?.label;

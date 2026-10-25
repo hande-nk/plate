@@ -7,6 +7,7 @@ import { dayTotals } from "@/core/day";
 import { PlatePhoto } from "@/components/PlatePhoto";
 import { startOfWeek, weekWins } from "@/core/week";
 import { WinCard } from "@/components/WinCard";
+import { feltGood } from "@/core/feel";
 import FeelingChips, { type Feeling } from "@/components/FeelingChips";
 import Link from "next/link";
 
@@ -83,7 +84,15 @@ export default function Today() {
   const plateTimes = Array.from(new Set(week.map((m) => m.eaten_at))).map((t) => new Date(t));
   const win = weekWins(plateTimes, new Date());
   const totals = dayTotals(list);
+  // One feeling per plate this week (same key as the plate cards)
+  const weekPlates = new Map<string, Meal>();
+  for (const m of week) weekPlates.set(`${m.eaten_at}|${m.photo_key ?? ""}`, m);
+  const felt = feltGood(Array.from(weekPlates.values()).map((m) => m.feeling));
 
+  // Update every row of a plate in memory after a chip tap
+  function setPlateFeeling(ids: number[], f: Feeling | null) {
+    setMeals((prev) => prev?.map((m) => (ids.includes(m.id) ? { ...m, feeling: f } : m)) ?? prev);
+  }
 
   //rows saved together share one eaten_at , so each group is one plate
   const plates = new Map<string, Meal[]>();
@@ -101,10 +110,11 @@ export default function Today() {
       <h1 style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: "-0.02em" }}>Hi Hande.</h1>
 
       {/* One card, three numbers, like the v3 Today strip */}
-      <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "1fr" : "repeat(3, 1fr)", padding: "14px 0" }}>
+      <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "repeat(2, 1fr)" : "repeat(4, 1fr)", padding: "14px 0" }}>
         {!hideNumbers && <Stat label="Eaten" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />}
         {!hideNumbers && <Stat label="Protein" value={totals.protein_g === null ? "-" : String(totals.protein_g)} unit="g" divider />}
         <Stat label="Plates" value={String(plates.size)} divider={!hideNumbers} />
+        <Stat label="Felt good" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
       </div>
 
       {error && <div className="alert" role="alert">{error}</div> }
@@ -133,7 +143,7 @@ export default function Today() {
               <div className="muted" style={{ fontSize: 15 }}>
                 {!hideNumbers && `${dayTotals(rows).kcal} kcal • `}{rows.length} {rows.length === 1 ? "item" : "items"}
               </div>
-              <FeelingChips mealIds={rows.map((m) => m.id)} initial={rows[0].feeling} />
+              <FeelingChips mealIds={rows.map((m) => m.id)} initial={rows[0].feeling} onChange={(f) => setPlateFeeling(rows.map((m) => m.id), f)} />
             </div>
           </article>
         );
