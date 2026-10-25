@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import type { Feeling } from "@/core/feel";
+export type { Feeling };
 
-export type Feeling = "energized" | "satisfied" | "heavy" | "hungry";
 const FEELINGS : { id: Feeling; label: string }[] = [
     { id: "energized", label: "Energized" },
     { id: "satisfied", label: "Satisfied" },
