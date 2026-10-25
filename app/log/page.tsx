@@ -46,6 +46,7 @@ export default function LogPage() {
     const [when, setWhen] = useState<When>("now");
     const [dishes, setDishes] = useState<Dish[]> ([]);
     const [photo, setPhoto] = useState<File | null>(null);
+    const [hideNumbers, setHideNumbers] = useState(false);
 
 
     function call<T>(msg: object): Promise<T> {
@@ -89,8 +90,11 @@ export default function LogPage() {
     
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
-        if (!data.session) router.replace("/login");
-        else setReady(true);
+        if (!data.session) { router.replace("/login"); return; }
+        supabase.from("profiles").select("hide_numbers").maybeSingle().then(({ data: prof }) => {
+          setHideNumbers(Boolean(prof?.hide_numbers));
+          setReady(true);
+        });
 
         });
     }, [router]);
@@ -294,7 +298,7 @@ export default function LogPage() {
                                     textAlign: "left", cursor: "pointer", fontFamily: "inherit",
                                 }}>
                             <div style={{ fontWeight: 500}}>{dish.name}</div>
-                            <div className="muted">{dish.kcal} kcal • {Math.round(p *100)}% match</div>
+                            <div className="muted">{!hideNumbers && `${dish.kcal} kcal • `}{Math.round(p * 100)}% match</div>
                         </button>
 
 
@@ -347,7 +351,7 @@ export default function LogPage() {
 
             {items.length > 0 && (
                 <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                    <div>{items.length} {items.length === 1 ? "item" : "items"} • {totalKcal} kcal</div>
+                    <div>{items.length} {items.length === 1 ? "item" : "items"}{!hideNumbers && ` • ${totalKcal} kcal`}</div>
                     <button type="button" className="btn" onClick={onLog} disabled={busy}>
                         {busy ? "Saving..." : `Log ${items.length}`}
                     </button>
