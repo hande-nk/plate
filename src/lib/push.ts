@@ -26,3 +26,12 @@ export async function enablePush(): Promise<"on" | "denied" | "unsupported"> {
     if (error) throw new Error(error.message);
     return "on";
 }
+
+export async function disablePush() {
+    if(!pushSupported()) return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) return;
+    await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+    await sub.unsubscribe();
+}
