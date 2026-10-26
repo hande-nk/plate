@@ -3,14 +3,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { base64UrlToBytes } from "@/core/vapid";
+import { useRouter } from "next/navigation";
 
 export default function PushSpike() {
+    const router = useRouter();
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const say = (line: string) => setLog((l) => [...l, line]);
 
   // Facts the spike depends on, checked once on open
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) { router.replace("/login"); return; }
+        say(`Logged in as ${data.session.user.email}`);
+    });
     const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
     say(`Service worker: ${"serviceWorker" in navigator ? "yes" : "no"}`);
     say(`Push API: ${"PushManager" in window ? "yes" : "no (on iPhone, open Plate from the home-screen icon)"}`);
