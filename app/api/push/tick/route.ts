@@ -1,7 +1,6 @@
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 import { duePushes, type Candidate, type Kind } from "@/core/push";
-import { createHash } from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -14,14 +13,9 @@ const localDay = (now: Date, tz: string) => new Intl.DateTimeFormat("en-CA", { t
 
 export async function POST(req: Request) {
   const secret = process.env.PUSH_TICK_SECRET;
-  const auth = req.headers.get("authorization") ?? "";
-  if (!secret || auth !== `Bearer ${secret}`) {
-    const fp = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 8);
-    return Response.json({          // TEMPORARY: remove once it works
-      hasEnv: !!secret, envLen: secret?.length ?? 0, envFp: secret ? fp(secret) : null,
-      headerLen: auth.length, headerFp: fp(auth.replace(/^Bearer /, "")),
-    }, { status: 401 });
-  }
+    if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+        return new Response("Unauthorized", { status: 401 });
+    }
   const { candidates } = (await req.json()) as { candidates: Row[] };
   const now = new Date();
   webpush.setVapidDetails("https://plate-tawny-sigma.vercel.app",
