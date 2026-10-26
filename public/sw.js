@@ -3,19 +3,13 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("active", (e) => e.waitUnitl(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
-    let data = {};
-    try { 
-        data = event.data ? event.data.json() : {}; 
-    } catch {
-        data = {body: event.data && event.data.text()};
-    }
-
-    event.waitUnitl(
-        self.registeration.showNotification(data.title || "Plate", {
-            body: data.body || "",
-            data: { url: data.url || "/"},
-        })
-    );
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  event.waitUntil((async () => {
+    await self.registration.showNotification(data.title || "Plate", { body: data.body || "", data: { url: data.url || "/" } });
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    wins.forEach((w) => w.postMessage({ type: "push-log", text: "SW: push received and shown" }));
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {
