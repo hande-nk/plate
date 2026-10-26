@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   } catch {}
   const check = { pairOk, pubLen: pub.length, privLen: priv.length, pubHasSpace: /\s/.test(pub), privHasSpace: /\s/.test(priv) };
   webpush.setVapidDetails(
-    "mailto:YOUR_EMAIL_HERE",  // Apple rejects fake addresses: use your real one
+    "https://plate-q2ke36g42-handes-projects-dcf99967.vercel.app", 
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!
   );
