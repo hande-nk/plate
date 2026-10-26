@@ -15,10 +15,11 @@ type Prof = {
   avoids: string[] | null; allergy_note: string | null; motivations: string[] | null;
   lunch_nudge: boolean; weigh_reminder: boolean; sunday_edition: boolean;
   hide_numbers: boolean; hide_weight: boolean;
+  tz: string;
 };
 type NotifyKey = "lunch_nudge" | "weigh_reminder" | "sunday_edition";
 
-const COLS = "height_cm, age, sex, activity, pace, avoids, allergy_note, motivations, lunch_nudge, weigh_reminder, sunday_edition, hide_numbers, hide_weight";
+const COLS = "height_cm, age, sex, activity, pace, avoids, allergy_note, motivations, lunch_nudge, weigh_reminder, sunday_edition, hide_numbers, hide_weight, tz";
 
 function Toggle({ label, note, on, onChange, disabled }: { label: string; note?: string; on: boolean; onChange?: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -28,6 +29,8 @@ function Toggle({ label, note, on, onChange, disabled }: { label: string; note?:
     </div>
   );
 }
+
+
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -57,6 +60,10 @@ export default function ProfilePage() {
       if (!p) { router.replace("/welcome"); return; }
       const prof = { ...p, height_cm: Number(p.height_cm), age: Number(p.age) } as Prof;
       setProf(prof);
+    const phoneTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (phoneTz && phoneTz !== prof.tz) {
+        supabase.from("profiles").update({ tz: phoneTz }).eq("user_id", data.session.user.id).then(() => {});
+    }
       setKg(w ? Number(w.kg) : null);
       setHeight(String(prof.height_cm));
       setAge(String(prof.age));
