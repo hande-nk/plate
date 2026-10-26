@@ -25,8 +25,17 @@ export default function PushSpike() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").then(() => say("Service worker registered"), (e) => say(`SW failed: ${e.message}`));
     }
+    navigator.serviceWorker.addEventListener("message", (e) => {
+        if (e.data?.type === "push-log") say(e.data.text);
+    });
+    navigator.serviceWorker.ready.then((reg) => say(`Active worker: ${reg.active?.scriptURL ?? "none"}`));
   }, []);
 
+    async function localTest() {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification("Plate", { body: "Local test, no server involved." });
+        say("Local notification requested");
+    }
   async function enable() {
     setBusy(true);
     try {
@@ -61,6 +70,7 @@ export default function PushSpike() {
       say(delay ? `Sending in ${delay} s, lock your phone now` : "Sending...");
       const res = await fetch("/api/push-test", {
         method: "POST",
+        keepalive: true,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
         body: JSON.stringify({ delay }),
       });
@@ -79,6 +89,7 @@ export default function PushSpike() {
       <button type="button" className="btn" onClick={enable} disabled={busy}>1. Enable notifications</button>
       <button type="button" className="btn" onClick={() => send(0)} disabled={busy}>2. Send test now</button>
       <button type="button" className="btn-quiet" onClick={() => send(8)} disabled={busy}>3. Send in 8 s (lock the phone)</button>
+      <button type="button" className="btn-quiet" onClick={localTest} disabled={busy}>4. Local test (no server)</button>
       <div className="card" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, display: "grid", gap: 4 }}>
         {log.map((l, i) => <div key={i}>{l}</div>)}
       </div>
