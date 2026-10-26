@@ -174,6 +174,7 @@ export default function Today() {
       {/* Glass only on controls (v3.1 HIG pass). More tabs join as their pages ship. */}
       <nav className="tabbar glass" aria-label="Main">
         <Link href="/" aria-current="page">Home</Link>
+        <Link href="/profile" className="muted" style={{ textAlign: "center", textDecoration: "none" }}>Profile</Link>
         <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/add">Dishes</Link>
         <Link href="/weigh">Weight</Link>
