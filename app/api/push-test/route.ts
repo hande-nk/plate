@@ -37,7 +37,8 @@ export async function POST(req: Request) {
   for (const [i, r] of results.entries()) {
     if (r.status === "rejected") {
       const code = (r.reason as { statusCode?: number }).statusCode;
-      failed.push(`${code ?? "?"}: ${(r.reason as Error).message}`);
+      const body = (r.reason as { body?: string }).body;
+      failed.push(`${code ?? "?"}: ${body || (r.reason as Error).message}`);
       if (code === 404 || code === 410) await db.from("push_subscriptions").delete().eq("id", subs[i].id);
     }
   }
