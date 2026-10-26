@@ -177,6 +177,7 @@ export default function Today() {
         <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/add">Dishes</Link>
         <Link href="/weigh">Weight</Link>
+        <Link href="/push-spike">Push Spike</Link>
       </nav>
     </>
   );
