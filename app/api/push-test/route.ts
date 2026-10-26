@@ -18,7 +18,17 @@ export async function POST(req: Request) {
   const { data: subs, error } = await db.from("push_subscriptions").select("id, endpoint, p256dh, auth");
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!subs?.length) return Response.json({ error: "No subscription. Tap Enable first." }, { status: 404 });
-
+    // Spike-only self-check: does the private key really belong to the public key?
+  const { createECDH } = await import("node:crypto");
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+  const priv = process.env.VAPID_PRIVATE_KEY ?? "";
+  let pairOk = false;
+  try {
+    const ecdh = createECDH("prime256v1");
+    ecdh.setPrivateKey(Buffer.from(priv.trim(), "base64url"));
+    pairOk = ecdh.getPublicKey().toString("base64url") === pub.trim();
+  } catch {}
+  const check = { pairOk, pubLen: pub.length, privLen: priv.length, pubHasSpace: /\s/.test(pub), privHasSpace: /\s/.test(priv) };
   webpush.setVapidDetails(
     "mailto:YOUR_EMAIL_HERE",  // Apple rejects fake addresses: use your real one
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
@@ -42,5 +52,5 @@ export async function POST(req: Request) {
       if (code === 404 || code === 410) await db.from("push_subscriptions").delete().eq("id", subs[i].id);
     }
   }
-  return Response.json({ sent: results.length - failed.length, failed });
+  return Response.json({ sent: results.length - failed.length, failed, check });
 }
