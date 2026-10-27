@@ -59,12 +59,19 @@ export default function Today() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if(!data.session) { router.replace("/login"); return; }
-      const { data: prof } = await supabase.from("profiles").select("onboarded_at, hide_numbers").maybeSingle();
+      const { data: prof } = await supabase.from("profiles").select("onboarded_at, hide_numbers, tz").maybeSingle();
       if(!prof?.onboarded_at) { router.replace("/welcome"); return; }
       setHideNumbers(Boolean(prof.hide_numbers));
+      if (prof.tz) setTz(prof.tz);
       setReady(true);
     })();
   }, [router]);
+
+  useEffect(() => {
+    if (!ready) return;
+    supabase.from("planned_treats").select("id, name, eaten_at").eq("day", localDay()).maybeSingle()
+      .then(({ data }) => setTreat(data ? { id: data.id, name: data.name, eaten: !!data.eaten_at } : null));
+  }, [ready]);
 
   //today's meals, from midnight on this phone
   useEffect(() => {
@@ -102,7 +109,8 @@ export default function Today() {
   const list = week.filter((m) => new Date(m.eaten_at) >= midnight);   // just today
 
   // One time per plate (dishes saved together share eaten_at), for the Small win card.
-  const plateTimes = Array.from(new Set(week.map((m) => m.eaten_at))).map((t) => new Date(t));
+  const plateTimes = Array.from(new Set(week.map((m) => `${m.eaten_at}|${m.photo_key ?? ""}`)))
+  .map((key) => new Date(key.split("|")[0]));
   const win = weekWins(plateTimes, new Date());
   const totals = dayTotals(list);
   // One feeling per plate this week (same key as the plate cards)
@@ -121,6 +129,8 @@ export default function Today() {
     const key = `${m.eaten_at}|${m.photo_key ?? ""}`; // same time + same photo = same plate
     plates.set(key, [...(plates.get(key) ?? []), m]);
   }
+  const lastPlateAt = list.length ? new Date(Math.max(...list.map((m) => new Date(m.eaten_at).getTime()))) : null;
+  const showPill = new Date().getHours() >= 18;
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric"});
 
@@ -132,10 +142,10 @@ export default function Today() {
 
       {/* One card, three numbers, like the v3 Today strip */}
       <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "repeat(2, 1fr)" : "repeat(4, 1fr)", padding: "14px 0" }}>
-        {!hideNumbers && <Stat label="Eaten" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />}
+        {!hideNumbers && <Stat label="Today" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />}
         {!hideNumbers && <Stat label="Protein" value={totals.protein_g === null ? "-" : String(totals.protein_g)} unit="g" divider />}
         <Stat label="Plates" value={String(plates.size)} divider={!hideNumbers} />
-        <Stat label="Felt good" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
+        <Stat label="Felt good (wk)" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
       </div>
 
       {error && <div className="alert" role="alert">{error}</div> }
@@ -150,13 +160,13 @@ export default function Today() {
       )}
 
 
-      {Array.from(plates).map(([at, rows]) => {
-        const time = new Date(at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      {Array.from(plates).map(([key, rows]) => {
+        const time = new Date(rows[0].eaten_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
         const names = rows
           .map((m) => (m.portion !== null && m.portion !== 1 ? `${m.dish_name} × ${m.portion}` : m.dish_name))
           .join(", ");
         return (
-          <article key={at} className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <article key={key} className="card" style={{ padding: 0, overflow: "hidden" }}>
             {rows[0].photo_key && <PlatePhoto photoKey={rows[0].photo_key} />}
             <div style={{ display: "grid", gap: 10, padding: 20}}>
               <span className="pill">{time}</span>
@@ -172,6 +182,12 @@ export default function Today() {
       
 
       {win.count > 0 && <WinCard count={win.count} days={win.days} />}
+      {treat && !treat.eaten && (
+          <div className="card" style={{ display: "grid", gap: 2 }}>
+            <div className="muted" style={{ fontSize: 12 }}>Planned treat today</div>
+            <div style={{ fontWeight: 500 }}>{treat.name}</div>
+          </div>
+        )}
 
     <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none", display: "flex", gap: 14, alignItems: "center" }}>
       <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
@@ -186,30 +202,24 @@ export default function Today() {
       </div>
     </div>
 
-      <button
-        type="button"
-        className="muted"
-        style={{ background: "none", border: "none", cursor: "pointer"}}
-        onClick={async () => {
-          await supabase.auth.signOut();
-          router.replace("/login");
-        }}
-      >
-        Log out
-      </button>
-
       </main>
 
       {/* Glass only on controls (v3.1 HIG pass). More tabs join as their pages ship. */}
       <nav className="tabbar glass" aria-label="Main">
         <Link href="/" aria-current="page">Home</Link>
-        <Link href="/profile" className="muted" style={{ textAlign: "center", textDecoration: "none" }}>Profile</Link>
-        <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/add">Dishes</Link>
+        <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/weigh">Weight</Link>
+        <Link href="/profile">Profile</Link>
        
       </nav>
       {sheet && <ClueSheet clue={sheet} found={cases.length} onClose={() => { setSheet(null); router.replace("/"); }} />}
+      {showPill && !hungry && (
+        <button type="button" className="hunger-pill glass" onClick={() => setHungry(true)}>Craving something?</button>
+      )}
+      {hungry && (
+        <HungerFlow data={{ lastPlateAt, platesToday: plates.size, plannedTreat: treat, tz }} onClose={() => setHungry(false)} />
+      )}
     </>
   );
 }
