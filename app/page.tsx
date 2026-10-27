@@ -11,6 +11,8 @@ import { Safiye } from "@/components/Safiye";
 import { feltGood } from "@/core/feel";
 import FeelingChips, { type Feeling } from "@/components/FeelingChips";
 import { ClueSheet, CaseMeter, type Clue } from "@/components/ClueSheet";
+import { HungerFlow } from "@/components/HungerFlow";
+import { localDay } from "@/lib/day";
 import Link from "next/link";
 
 type Meal = {
@@ -49,6 +51,9 @@ export default function Today() {
   const [hideNumbers, setHideNumbers] = useState(false);
   const [cases, setCases] = useState<{ clue_id: number; clues: Clue }[]>([]);
   const [sheet, setSheet] = useState<Clue | null>(null);
+  const [tz, setTz] = useState("America/New_York");
+  const [treat, setTreat] = useState<{ id: number; name: string; eaten: boolean } | null>(null);
+  const [hungry, setHungry] = useState(false);
 
   useEffect(() => {
     (async () => {
