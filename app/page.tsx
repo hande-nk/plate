@@ -7,6 +7,7 @@ import { dayTotals } from "@/core/day";
 import { PlatePhoto } from "@/components/PlatePhoto";
 import { startOfWeek, weekWins } from "@/core/week";
 import { WinCard } from "@/components/WinCard";
+import { Safiye } from "@/components/Safiye";
 import { feltGood } from "@/core/feel";
 import FeelingChips, { type Feeling } from "@/components/FeelingChips";
 import Link from "next/link";
@@ -152,10 +153,15 @@ export default function Today() {
 
       {win.count > 0 && <WinCard count={win.count} days={win.days} />}
 
-      <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none" }}>
-        <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanim • case file 1</div>
-        <div style={{ fontSize: 15, marginTop: 4 }}>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</div>
+    <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none", display: "flex", gap: 14, alignItems: "center" }}>
+      <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
+        <Safiye mood="kuzum" size={64} />
       </div>
+      <div style={{ display: "grid", gap: 4 }}>
+        <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanım · case file No. 1</div>
+        <div style={{ fontSize: 15, lineHeight: 1.4 }}>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</div>
+      </div>
+    </div>
 
       <button
         type="button"

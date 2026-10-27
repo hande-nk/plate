@@ -39,17 +39,16 @@ body {
   box-shadow: 0 10px 30px -12px rgba(18, 18, 18, 0.25);
 }
 .tabbar {
-  position: fixed; left: 50%; transform: translateX(-50%); z-index: 10;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  width: min(320px, calc(100% - 32px)); border-radius: 999px; padding: 6px;
-  display: flex; align-items: center; justify-content: space-around;
+  position: fixed; bottom: calc(14px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+  width: min(402px, calc(100% - 28px)); height: 66px; box-sizing: border-box; padding: 0 8px;
+  border-radius: 33px; display: flex; align-items: center; justify-content: space-between; z-index: 10;
 }
-.tabbar a {
-  min-height: var(--tap); min-width: 72px; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--stone); text-decoration: none;
+.tabbar a { flex: 1; text-align: center; font-size: 13px; color: var(--stone); text-decoration: none; }
+.tabbar a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.tabbar a.plus {
+  flex: none; width: 50px; height: 50px; border-radius: 25px; background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 6px;
 }
-.tabbar a[aria-current="page"] { color: var(--ink); font-weight: 500; }
-.tabbar a.plus { min-width: 52px; height: 52px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 26px; }
 
 /* Selection is ink, never matcha: matcha only means progress (design v3.1). */
 .choice {
