@@ -47,6 +47,8 @@ export default function Today() {
   const [meals, setMeals] = useState<Meal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hideNumbers, setHideNumbers] = useState(false);
+  const [cases, setCases] = useState<{ clue_id: number; clues: Clue }[]>([]);
+  const [sheet, setSheet] = useState<Clue | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -74,6 +76,18 @@ export default function Today() {
         else setMeals(data ?? []);
       });
   }, [ready]);
+
+  useEffect(() => {
+  if (!ready) return;
+  supabase.from("user_clues").select("clue_id, clues(ord, title, body, place)").order("found_at", { ascending: false })
+    .then(({ data }) => {
+      const rows = (data ?? []) as unknown as { clue_id: number; clues: Clue }[];
+      setCases(rows);
+      const n = Number(new URLSearchParams(window.location.search).get("clue"));
+      const hit = rows.find((r) => r.clue_id === n);
+      if (hit) setSheet(hit.clues);
+    });
+}, [ready]);
 
   if (!ready) return null;
 
@@ -158,9 +172,12 @@ export default function Today() {
       <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
         <Safiye mood="kuzum" size={64} />
       </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanım · case file No. 1</div>
-        <div style={{ fontSize: 15, lineHeight: 1.4 }}>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</div>
+      <div style={{ display: "grid", gap: 6, flex: 1 }}>
+        <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanım • case file No. 1</div>
+        <div style={{ fontSize: 15, lineHeight: 1.4 }}>
+          {cases[0] ? <>Clue {cases[0].clues.ord}: {cases[0].clues.title}.</> : <>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</>}
+        </div>
+        <CaseMeter found={cases.length} dark />
       </div>
     </div>
 
@@ -187,6 +204,7 @@ export default function Today() {
         <Link href="/weigh">Weight</Link>
        
       </nav>
+      {sheet && <ClueSheet clue={sheet} found={cases.length} onClose={() => { setSheet(null); router.replace("/"); }} />}
     </>
   );
 }
