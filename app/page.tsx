@@ -10,7 +10,7 @@ import { WinCard } from "@/components/WinCard";
 import { Safiye } from "@/components/Safiye";
 import { feltGood } from "@/core/feel";
 import FeelingChips, { type Feeling } from "@/components/FeelingChips";
-import { nextClue } from "@/core/clue";
+import { ClueSheet, CaseMeter, type Clue } from "@/components/ClueSheet";
 import Link from "next/link";
 
 type Meal = {

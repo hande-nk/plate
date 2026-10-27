@@ -8,6 +8,7 @@ import { toSims, scoreDishes, buildPrior, type ClipOut } from "@/core/matcher";
 import { scaleDish } from "@/core/portion";
 import { shrinkPhoto, savePhoto } from "@/lib/photos";
 import { eatenAt, choicesFor, type When } from "@/core/when";
+import { nextClue } from "@/core/clue";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -232,10 +233,30 @@ export default function LogPage() {
 
         //setNotice({ kind: "ok", text: `Logged ${rows.length} items • ${totalKcal} kcal`});
 
+        // Did this save earn a clue? The sheet shows on Today, never here on /log.
+        let earned: number | null = null;
+        try {
+          const [{ data: plates }, { data: mine }, { data: prof }] = await Promise.all([
+            supabase.from("meals").select("eaten_at, photo_key"),
+            supabase.from("user_clues").select("clue_id, found_at").order("found_at", { ascending: false }),
+            supabase.from("profiles").select("tz").maybeSingle(),
+          ]);
+          const platesEver = new Set((plates ?? []).map((m) => `${m.eaten_at}|${m.photo_key ?? ""}`)).size;
+          const found = (mine ?? []).map((c) => c.clue_id as number);
+          const last = mine?.[0] ? new Date(mine[0].found_at) : null;
+          earned = nextClue(platesEver, found, last, new Date(), prof?.tz ?? "America/New_York");
+          if (earned) {
+            const { error: cErr } = await supabase.from("user_clues").insert({ user_id: session.user.id, clue_id: earned, plate_at: at });
+            if (cErr) earned = null;
+          }
+        } catch {
+          earned = null; // a clue is a bonus: it never blocks the save
+        }
+
         setPicked(new Map());
         setPhoto(null);
         setWhen("now");
-        router.push("/");
+        router.push(earned ? `/?clue=${earned}` : "/");
 
     }
 
