@@ -56,21 +56,21 @@ export default function Progress() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) { router.replace("/login"); return; }
-      const since = new Date(Date.now() - SPAN_DAYS.semester * DAY_MS);
-      const [p, w, m] = await Promise.all([
-        supabase.from("profiles").select("height_cm, age, sex, activity, pace, hide_numbers, hide_weight, tz").maybeSingle(),
-        supabase.from("weigh_ins").select("day, kg").gte("day", since.toISOString().slice(0, 10)).order("day"),
-        supabase.from("meals").select("eaten_at, photo_key, kcal, protein_g, carbs_g, fat_g, feeling, dishes(hall)")
-          .gte("eaten_at", since.toISOString()).order("eaten_at"),
-      ]);
-      const err = p.error ?? w.error ?? m.error;
-      if (err) { setError(err.message); return; }
-      if (!p.data) { router.replace("/welcome"); return; }
-      setProf({ ...p.data, height_cm: Number(p.data.height_cm), age: Number(p.data.age) });
-      setWeighs((w.data ?? []).map((r: Weigh) => ({ day: r.day, kg: Number(r.kg) })));
-      setMeals(m.data ?? []);
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) { router.replace("/login"); return; }
+        const since = new Date(Date.now() - SPAN_DAYS.semester * DAY_MS);
+        const [p, w, m] = await Promise.all([
+            supabase.from("profiles").select("height_cm, age, sex, activity, pace, hide_numbers, hide_weight, tz").maybeSingle(),
+            supabase.from("weigh_ins").select("day, kg").gte("day", since.toISOString().slice(0, 10)).order("day"),
+            supabase.from("meals").select("eaten_at, photo_key, kcal, protein_g, carbs_g, fat_g, feeling, dishes(hall)")
+            .gte("eaten_at", since.toISOString()).order("eaten_at"),
+        ]);
+        const err = p.error ?? w.error ?? m.error;
+        if (err) { setError(err.message); return; }
+        if (!p.data) { router.replace("/welcome"); return; }
+        setProf({ ...p.data, height_cm: Number(p.data.height_cm), age: Number(p.data.age) });
+        setWeighs((w.data ?? []).map((r: Weigh) => ({ day: r.day, kg: Number(r.kg) })));
+        setMeals((m.data ?? []).map((r) => ({ ...r, dishes: Array.isArray(r.dishes) ? r.dishes[0] ?? null : r.dishes })));
     })();
   }, [router]);
 
@@ -90,10 +90,10 @@ export default function Progress() {
   const paceKg = PACE_KG_WEEK[prof.pace];
   let trendLine = "Weigh in at least twice to see your trend.";
   if (states.length >= 2) {
-    if (paceKg === null) trendLine = `About ${fmtKg(weeklyRate)} a week. You're just tracking, so there's no pace to compare.`;
-    else if (weeklyRate < -1) trendLine = "Faster than 1 kg a week. That's quicker than Plate recommends; worth a look at your range.";
-    else if (weeklyRate <= -paceKg * 0.8) trendLine = "On or ahead of your pace.";
-    else trendLine = "Slower than your pace this stretch. Trends wobble; it's the weeks that count.";
+        if (paceKg === null) trendLine = `About ${fmtKg(weeklyRate)} a week. You're just tracking, so there's no pace to compare.`;
+        else if (weeklyRate < -1) trendLine = "Faster than 1 kg a week. That's quicker than Plate recommends; worth a look at your range.";
+        else if (weeklyRate <= -paceKg * 0.8) trendLine = "On or ahead of your pace.";
+        else trendLine = "Slower than your pace this stretch. Trends wobble; it's the weeks that count.";
   }
   const chart = (() => {
     if (states.length < 2) return null;
