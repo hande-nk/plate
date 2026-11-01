@@ -1,5 +1,3 @@
-
-
 /*
  T17. "I ate half the bag" -> how many label servings that is.
  The label's numbers are per serving, so the result goes straight into scaleDish(labelFacts, servings).
@@ -12,7 +10,18 @@ export type PacketPick =
 // servingsPerPacket: null means unknown (the label line wasn't read). Then a fraction can't be
 // turned into servings, so return null and the screen asks "How many servings in the packet?"
 export function portionOfPacket(pick: PacketPick, servingsPerPacket: number | null): number | null {
-  throw new Error("TODO");
+    const round2 = (x: number) => Math.round(x * 100) / 100;
+
+    if (pick.kind === "servings") {
+        if (!Number.isFinite(pick.n) || pick.n <= 0) throw new Error("bad servings");
+        return round2(pick.n);
+    }
+
+    // from here on, TypeScript knows pick is { kind: "fraction"; of }
+    if (!Number.isFinite(pick.of) || pick.of <= 0  || pick.of > 1) throw new Error("bad fraction");
+    if (servingsPerPacket === null) return null;
+    if (servingsPerPacket <= 0 || !Number.isFinite(servingsPerPacket)) throw new Error("bad packet");
+    return round2(pick.of * servingsPerPacket);
 }
 
 // parseLabel doesn't read this line, so this does. Formats seen on real labels:
@@ -22,5 +31,14 @@ export function portionOfPacket(pick: PacketPick, servingsPerPacket: number | nu
 //   "Servings per container about 8"
 //   "1 serving per package", "about 2,5 servings per bag"
 export function readServingsPerPacket(ocr: string): number | null {
-  throw new Error("TODO");
+    const t = ocr.toLowerCase().replace(/(\d),(\d)/g, "$1.$2");   // case-proof, "2,5" -> "2.5"
+
+    const NUM = String.raw`(\d+(?:\.\d+)?)`;
+    const WORDS = String.raw`servings?\s*per\s*(?:container|package|packet|bag)`;
+
+    const before = t.match(new RegExp(NUM + String.raw`\s*` + WORDS));
+    if (before) return Number(before[1]);
+
+    const after = t.match(new RegExp(WORDS + String.raw`\s*:?\s*(?:about\s*)?` + NUM));
+    return after ? Number(after[1]) : null;
 }
