@@ -1,5 +1,5 @@
 export type Feeling = "energized" | "satisfied" | "heavy" | "hungry";
-const GOOD: Feeling[] = ["energized", "satisfied"];
+export const GOOD: readonly Feeling[] = ["energized", "satisfied"];
 
 //one entry per plate  
 // null if not answered yet
