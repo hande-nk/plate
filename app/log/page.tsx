@@ -9,6 +9,7 @@ import { scaleDish } from "@/core/portion";
 import { shrinkPhoto, savePhoto } from "@/lib/photos";
 import { eatenAt, choicesFor, type When } from "@/core/when";
 import { nextClue } from "@/core/clue";
+import Link from "next/link";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -234,24 +235,7 @@ export default function LogPage() {
         //setNotice({ kind: "ok", text: `Logged ${rows.length} items • ${totalKcal} kcal`});
 
         // Did this save earn a clue? The sheet shows on Today, never here on /log.
-        let earned: number | null = null;
-        try {
-          const [{ data: plates }, { data: mine }, { data: prof }] = await Promise.all([
-            supabase.from("meals").select("eaten_at, photo_key"),
-            supabase.from("user_clues").select("clue_id, found_at").order("found_at", { ascending: false }),
-            supabase.from("profiles").select("tz").maybeSingle(),
-          ]);
-          const platesEver = new Set((plates ?? []).map((m) => `${m.eaten_at}|${m.photo_key ?? ""}`)).size;
-          const found = (mine ?? []).map((c) => c.clue_id as number);
-          const last = mine?.[0] ? new Date(mine[0].found_at) : null;
-          earned = nextClue(platesEver, found, last, new Date(), prof?.tz ?? "America/New_York");
-          if (earned) {
-            const { error: cErr } = await supabase.from("user_clues").insert({ user_id: session.user.id, clue_id: earned, plate_at: at });
-            if (cErr) earned = null;
-          }
-        } catch {
-          earned = null; // a clue is a bonus: it never blocks the save
-        }
+        const earned = await clueAfterSave(session.user.id, at);
 
         setPicked(new Map());
         setPhoto(null);
@@ -307,6 +291,9 @@ export default function LogPage() {
 
             {image && <img src={image} alt="" style={{width: "100%", borderRadius: 14}} /> }
 
+            <Link href="/snack" className="muted" style={{ fontSize: 15, minHeight: 44, display: "flex", alignItems: "center" }}>
+                Packaged snack? Read the label →
+            </Link>
             {ranked.map(({ dish, p }) => {
                 const isPicked = picked.has(dish.id);
                 const portion = picked.get(dish.id);
