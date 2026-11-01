@@ -9,6 +9,7 @@ import { scaleDish } from "@/core/portion";
 import { shrinkPhoto, savePhoto } from "@/lib/photos";
 import { eatenAt, choicesFor, type When } from "@/core/when";
 import { nextClue } from "@/core/clue";
+import { clueAfterSave } from "@/lib/clueAfterSave";
 import Link from "next/link";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
