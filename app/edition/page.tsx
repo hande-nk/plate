@@ -175,7 +175,7 @@ function EditionPage() {
             {best ? (
                 <>
                 <div style={{ fontSize: 17, fontWeight: 500 }}>
-                    {best.plate.dishes.join(", ")}{best.plate.hall ? `, ${HALLS[best.plate.hall] ?? best.plate.hall}` : ""}, {weekday(best.plate.at, tz)}.
+                       {best.plate.dishes.join(", ").replace(/^./, (c) => c.toUpperCase())}{best.plate.hall ? `, ${HALLS[best.plate.hall] ?? best.plate.hall}` : ""}, {weekday(best.plate.at, tz)}.
                 </div>
                 <div style={{ fontSize: 13, color: "var(--stone)" }}>
                     You felt {best.plate.feeling} after it.
