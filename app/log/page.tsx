@@ -295,6 +295,9 @@ export default function LogPage() {
             <Link href="/snack" className="muted" style={{ fontSize: 15, minHeight: 44, display: "flex", alignItems: "center" }}>
                 Packaged snack? Read the label →
             </Link>
+            <Link href="/order" className="muted" style={{ fontSize: 15, minHeight: 44, display: "flex", alignItems: "center" }}>
+                Mobile order? Read the Reorder screen →
+            </Link>
             {ranked.map(({ dish, p }) => {
                 const isPicked = picked.has(dish.id);
                 const portion = picked.get(dish.id);
