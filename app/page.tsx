@@ -13,6 +13,7 @@ import FeelingChips, { type Feeling } from "@/components/FeelingChips";
 import { ClueSheet, CaseMeter, type Clue } from "@/components/ClueSheet";
 import { HungerFlow } from "@/components/HungerFlow";
 import { localDay } from "@/lib/day";
+import { LogCalendar } from "@/components/LogCalendar";
 import Link from "next/link";
 
 type Meal = {
