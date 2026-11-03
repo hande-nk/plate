@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { hungerCheck, type HungerPath } from "@/core/hunger";
+import { TeaGlass } from "@/components/TeaGlass";
+import { Safiye } from "@/components/Safiye";
 
 type Kind = "hungry" | "dessert";
 type Activity = "tea" | "walk" | "text";
@@ -55,13 +57,15 @@ export function HungerFlow({ data, onClose }: { data: HungerData; onClose: () =>
   const [context, setContext] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: data.tz, hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  const late = hour >= 21 || hour < 6;
 
   function choose(k: Kind) {
     setKind(k);
     const r = hungerCheck({ kind: k, now: new Date(), lastPlateAt: data.lastPlateAt,
       platesToday: data.platesToday, plannedTreat: data.plannedTreat, tz: data.tz });   // your core decides
     setResult(r);
-    if (r.path === "wait") waitStart.current = Date.now();
+    if (r.path === "wait") { waitStart.current = Date.now(); if (late) setActivity("tea"); }
     setStep("path");
   }
 
@@ -160,9 +164,19 @@ export function HungerFlow({ data, onClose }: { data: HungerData; onClose: () =>
     body = (
       <>
         <div className="muted" style={{ fontSize: 12 }}>You ate {result.minutesSincePlate} min ago</div>
-        <div style={{ fontWeight: 600, fontSize: 28, letterSpacing: "-0.03em", lineHeight: 1.05 }}>Want to give it ten minutes?</div>
+        {late ? (
+             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+               <div style={{ width: 56, height: 56, borderRadius: 28, background: "#fff", overflow: "hidden", flex: "none" }}>
+                 <Safiye mood="sleepy" size={56} />
+               </div>
+               <div style={{ fontSize: 17, lineHeight: 1.35 }}>&ldquo;Kuzum, it&rsquo;s late. I&rsquo;m making çay. Sit with me ten minutes, then decide.&rdquo;</div>
+             </div>
+           ) : (
+             <div style={{ fontWeight: 600, fontSize: 28, letterSpacing: "-0.03em", lineHeight: 1.05 }}>Want to give it ten minutes?</div>
+        )}
+
         <div className="muted" style={{ fontSize: 14 }}>Cravings often ease once your attention moves. If it&rsquo;s still there after, have it and enjoy it.</div>
-        <Ring left={left} />
+        {late ? <TeaGlass left={left} total={WAIT_SECONDS} /> : <Ring left={left} />}
         <div role="group" aria-label="Something to do" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
           {ACTIVITIES.map((a) => chip(a.label, activity === a.id, () => setActivity(activity === a.id ? null : a.id)))}
         </div>
