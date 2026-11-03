@@ -190,6 +190,7 @@ export default function Today() {
       })}
       
 
+      <LogCalendar tz={tz} hideNumbers={hideNumbers} />
       {win.count > 0 && <WinCard count={win.count} days={win.days} />}
       {treat && !treat.eaten && (
           <div className="card" style={{ display: "grid", gap: 2 }}>
