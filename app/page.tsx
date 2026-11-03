@@ -147,9 +147,14 @@ export default function Today() {
         <Stat label="Plates" value={String(plates.size)} divider={!hideNumbers} />
         <Stat label="Felt good (wk)" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
       </div>
-      <Link href="/progress" style={{ alignSelf: "flex-end", fontSize: 13, color: "var(--stone)", textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>
-        See progress 
-      </Link>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 18 }}>
+          <Link href="/edition" style={{ fontSize: 13, color: "var(--stone)", textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>
+            This week&apos;s edition →
+          </Link>
+          <Link href="/progress" style={{ fontSize: 13, color: "var(--stone)", textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>
+            See progress →
+          </Link>
+      </div>
 
       {error && <div className="alert" role="alert">{error}</div> }
 
