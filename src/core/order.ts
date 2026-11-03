@@ -46,11 +46,11 @@ export function splitItems(lines: string[]): string[] {
     if (!text) { text = line; continue; }
     const firstPiece = line.split(SEP)[0].trim();
     const join =
-      SEP_END.test(text) ||
-      openParen(text) ||
-      /^[a-z(]/.test(line) ||
-      (firstPiece !== "" && !/\s/.test(line));
-    text += join ? line : " • ";
+        SEP_END.test(text) ||
+        openParen(text) ||
+        /^[a-z(]/.test(line) ||
+        (firstPiece !== "" && !/\s/.test(firstPiece));
+    text += (join ? " " : " • ") + line;
   }
 
   // 2 to 4. Split, clean, drop
