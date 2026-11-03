@@ -1,6 +1,7 @@
 "use client";
 
-// T27 + T31. Log Hodgdon / Kindlevan mobile orders from one screenshot of the Reorder screen.
+// T27 + T31. Log Hodgdon / Kindlevan mobile orders from a screenshot:
+// today's Confirm order screen (one order, real time) or the Reorder tab (many past orders).
 // OCR runs on the phone; the screenshot is never uploaded or saved.
 // Parts come from your parseReorder. Known parts use your library. New parts get a USDA estimate
 // (your pickFood + estimatePart) that you check once; then they live in your library.
@@ -11,18 +12,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createWorker } from "tesseract.js";
 import { supabase } from "@/lib/supabase";
-import { parseReorder, type ReorderOrder } from "@/core/order";
+import { parseConfirm, parseReorder, type ReorderOrder } from "@/core/order";
 import { estimatePart, packSizeG, pickFood, type Estimate, type Portion, type UsdaFood } from "@/core/estimate";
 import { clueAfterSave } from "@/lib/clueAfterSave";
 
 type OcrWorker = Awaited<ReturnType<typeof createWorker>>;
+type Ord = ReorderOrder & { at?: string };     // a Confirm-order screenshot knows its real time
 type Dish = { id: number; name: string; hall: string | null; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null };
 type NewPart = {
-    name: string; skip: boolean; portion: Portion;
-    foods: UsdaFood[]; pick: number;           // index into foods
-    status: "idle" | "loading" | "done" | "none" | "error";
-    manual: string;                            // kcal typed by hand when USDA has nothing
-    err?: string;                           // kcal typed by hand when USDA has nothing
+  name: string; skip: boolean; portion: Portion;
+  foods: UsdaFood[]; pick: number;           // index into foods
+  status: "idle" | "loading" | "done" | "none" | "error";
+  manual: string;                            // kcal typed by hand when USDA has nothing
 };
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9.]+/g, " ").trim();
@@ -33,122 +34,132 @@ const dayIn = (d: Date, tz: string) => new Intl.DateTimeFormat("en-CA", { timeZo
 const AUTO_SKIP = /\b(water|byo sando|sando)\b/i;
 // Better USDA searches for Tufts menu words, and a typical deli portion in grams. All estimates; edit freely.
 const QUERY: [RegExp, string, number | null][] = [
-    [/gluten.?free wrap/i, "gluten free tortilla", 60],
-    [/gluten.?free sub roll|sub roll/i, "gluten free roll", 85],
-    [/chicken cutlet/i, "chicken breast breaded fried", 85],
-    [/chicken marinara/i, "chicken parmesan", 120],
-    [/tuna salad/i, "tuna salad", 100],
-    [/sharp cheddar|cheddar$/i, "cheddar cheese", 28],
-    [/mozzarella/i, "mozzarella cheese", 28],
-    [/green goddess/i, "green goddess dressing", 30],
-    [/basil pesto|pesto/i, "pesto sauce", 15],
-    [/mixed greens/i, "mixed salad greens", 20],
-    [/shredded lettuce/i, "lettuce iceberg", 20],
-    [/sliced tomato|tomato/i, "tomato raw", 30],
-    [/sunchips/i, "sunchips harvest cheddar", null],
-    [/rice crisp/i, "rice krispies treats original", null],
-    [/welch/i, "welch's fruit snacks", null],
-    [/fountain beverage/i, "cola soft drink", 355],
-    [/croissant/i, "egg and cheese croissant", 140],
+  [/gluten.?free wrap/i, "gluten free tortilla", 60],
+  [/gluten.?free sub roll|sub roll/i, "gluten free roll", 85],
+  [/chicken cutlet/i, "chicken breast breaded fried", 85],
+  [/chicken marinara/i, "chicken parmesan", 120],
+  [/tuna salad/i, "tuna salad", 100],
+  [/sharp cheddar|cheddar$/i, "cheddar cheese", 28],
+  [/mozzarella/i, "mozzarella cheese", 28],
+  [/green goddess/i, "green goddess dressing", 30],
+  [/basil pesto|pesto/i, "pesto sauce", 15],
+  [/mixed greens/i, "mixed salad greens", 20],
+  [/shredded lettuce/i, "lettuce iceberg", 20],
+  [/sliced tomato|tomato/i, "tomato raw", 30],
+  [/sunchips/i, "sunchips harvest cheddar", null],
+  [/rice crisp/i, "rice krispies treats original", null],
+  [/welch/i, "welch's fruit snacks", null],
+  [/fountain beverage/i, "cola soft drink", 355],
+  [/croissant/i, "egg and cheese croissant", 140],
 ];
 function searchFor(part: string): { q: string; typical: number | null } {
-    const hit = QUERY.find(([re]) => re.test(part));
-    if (hit) return { q: hit[1], typical: hit[2] };
-    return { q: part.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim(), typical: null };
+  const hit = QUERY.find(([re]) => re.test(part));
+  if (hit) return { q: hit[1], typical: hit[2] };
+  return { q: part.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim(), typical: null };
 }
 
 // Same name, or OCR dropped the first letter or two ("ixed greens" -> "mixed greens").
 function findDish(part: string, library: Dish[], place: string | null): Dish | null {
-    const n = norm(part);
-    if (!n) return null;
-    const hits = library.filter((d) => {
-        const dn = norm(d.name);
-        return dn === n || (n.length >= 5 && dn.endsWith(n) && dn.length - n.length <= 2);
-    });
-    return hits.find((d) => d.hall === place) ?? hits[0] ?? null;
+  const n = norm(part);
+  if (!n) return null;
+  const hits = library.filter((d) => {
+    const dn = norm(d.name);
+    return dn === n || (n.length >= 5 && dn.endsWith(n) && dn.length - n.length <= 2);
+  });
+  return hits.find((d) => d.hall === place) ?? hits[0] ?? null;
 }
 
-// The order screen has no times: lunch 12:30, dinner 18:30, breakfast 8:30, otherwise noon, in your time zone.
-function guessAt(o: ReorderOrder, tz: string): string {
-    const t = o.title.toLowerCase();
-    const [h, m] = t.includes("dinner") ? [18, 30] : t.includes("breakfast") ? [8, 30] : t.includes("lunch") ? [12, 30] : [12, 0];
-    const [y, mo, d] = o.day.split("-").map(Number);
-    const wall = Date.UTC(y, mo - 1, d, h, m);
-    let at = wall;
-    for (let k = 0; k < 2; k++) {
-        const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-        .formatToParts(new Date(at)).map((x) => [x.type, x.value]));
-        at += wall - Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute));
-    }
-    return new Date(at).toISOString();
+// A Confirm-order screenshot: eaten at pickup (now + "Pick up in" minutes).
+// The Reorder screen has no times: lunch 12:30, dinner 18:30, breakfast 8:30, otherwise noon, in your time zone.
+function guessAt(o: Ord, tz: string): string {
+  if (o.at) return o.at;
+  const t = o.title.toLowerCase();
+  const [h, m] = t.includes("dinner") ? [18, 30] : t.includes("breakfast") ? [8, 30] : t.includes("lunch") ? [12, 30] : [12, 0];
+  const [y, mo, d] = o.day.split("-").map(Number);
+  const wall = Date.UTC(y, mo - 1, d, h, m);
+  let at = wall;
+  for (let k = 0; k < 2; k++) {
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+      .formatToParts(new Date(at)).map((x) => [x.type, x.value]));
+    at += wall - Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute));
+  }
+  return new Date(at).toISOString();
 }
 
 // One new part's numbers: your estimate, or the hand-typed kcal, or 0 when skipped.
 function partValue(p: NewPart): { est: Estimate | null; kcal: number | null } {
-    if (p.skip) return { est: null, kcal: 0 };
-    const food = p.foods[p.pick];
-    if (food) {
-        const est = estimatePart(food, p.name, p.portion, searchFor(p.name).typical);   // your code
-        return { est, kcal: est.kcal };
-    }
-    const k = num(p.manual);
-    return { est: null, kcal: k >= 0 ? k : null };
+  if (p.skip) return { est: null, kcal: 0 };
+  const food = p.foods[p.pick];
+  if (food) {
+    const est = estimatePart(food, p.name, p.portion, searchFor(p.name).typical);   // your code
+    return { est, kcal: est.kcal };
+  }
+  const k = num(p.manual);
+  return { est: null, kcal: k >= 0 ? k : null };
 }
 
 export default function OrderPage() {
-    const router = useRouter();
-    const workerRef = useRef<OcrWorker | null>(null);
-    const asked = useRef<Set<string>>(new Set());
-    const [tz, setTz] = useState("America/New_York");
-    const [hideNumbers, setHideNumbers] = useState(false);
-    const [library, setLibrary] = useState<Dish[]>([]);
-    const [orders, setOrders] = useState<ReorderOrder[] | null>(null);
-    const [picked, setPicked] = useState<Set<number>>(new Set());
-    const [logged, setLogged] = useState<Set<string>>(new Set());
-    const [parts, setParts] = useState<Map<string, NewPart>>(new Map());   // key: norm(raw part)
-    const [status, setStatus] = useState<string | null>(null);
-    const [reading, setReading] = useState(false);
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const workerRef = useRef<OcrWorker | null>(null);
+  const asked = useRef<Set<string>>(new Set());
+  const [tz, setTz] = useState("America/New_York");
+  const [hideNumbers, setHideNumbers] = useState(false);
+  const [library, setLibrary] = useState<Dish[]>([]);
+  const [orders, setOrders] = useState<Ord[] | null>(null);
+  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [logged, setLogged] = useState<Set<string>>(new Set());
+  const [parts, setParts] = useState<Map<string, NewPart>>(new Map());   // key: norm(raw part)
+  const [status, setStatus] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        (async () => {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) { router.replace("/login"); return; }
-        const [p, d] = await Promise.all([
-            supabase.from("profiles").select("hide_numbers, tz").maybeSingle(),
-            supabase.from("dishes").select("id, name, hall, kcal, protein_g, carbs_g, fat_g"),
-        ]);
-        setHideNumbers(Boolean(p.data?.hide_numbers));
-        if (p.data?.tz) setTz(p.data.tz);
-        setLibrary(((d.data ?? []) as Dish[]).map((x) => ({ ...x, kcal: Number(x.kcal) })));
-        })();
-        return () => { workerRef.current?.terminate(); };
-    }, [router]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) { router.replace("/login"); return; }
+      const [p, d] = await Promise.all([
+        supabase.from("profiles").select("hide_numbers, tz").maybeSingle(),
+        supabase.from("dishes").select("id, name, hall, kcal, protein_g, carbs_g, fat_g"),
+      ]);
+      setHideNumbers(Boolean(p.data?.hide_numbers));
+      if (p.data?.tz) setTz(p.data.tz);
+      setLibrary(((d.data ?? []) as Dish[]).map((x) => ({ ...x, kcal: Number(x.kcal) })));
+    })();
+    return () => { workerRef.current?.terminate(); };
+  }, [router]);
 
-    async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        e.target.value = "";
-        if (!file) return;
-        setOrders(null); setError(null); setReading(true);
-        try {
-        if (!workerRef.current) { setStatus("Getting the reader ready (first time only)…"); workerRef.current = await createWorker("eng"); }
-        setStatus("Reading your orders…");
-        const { data } = await workerRef.current.recognize(file);
-        const found = parseReorder(data.text, dayIn(new Date(), tz));          // your code
-        if (found.length === 0) { setStatus("No orders found. Screenshot the Reorder tab so the dates and prices show."); return; }
-        const ats = found.map((o) => guessAt(o, tz));
-        const { data: have } = await supabase.from("meals").select("eaten_at").eq("route", "app-order").in("eaten_at", ats);
-        const already = new Set(((have ?? []) as { eaten_at: string }[]).map((r) => new Date(r.eaten_at).toISOString()));
-        setLogged(already);
-        setPicked(new Set(found.map((_, i) => i).filter((i) => !already.has(ats[i]))));
-        setOrders(found);
-        setStatus(null);
-        } catch (err) {
-        setStatus(`The reader failed: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-        setReading(false);
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setOrders(null); setError(null); setReading(true);
+    try {
+      if (!workerRef.current) { setStatus("Getting the reader ready (first time only)…"); workerRef.current = await createWorker("eng"); }
+      setStatus("Reading your orders…");
+      const { data } = await workerRef.current.recognize(file);
+      let found: Ord[] = parseReorder(data.text, dayIn(new Date(), tz));     // your code: the Reorder tab
+      if (found.length === 0) {
+        const c = parseConfirm(data.text);                                    // your code: one Confirm-order screen
+        if (c) {
+          const at = new Date(Date.now() + Math.min(c.pickupMin ?? 0, 180) * 60000);
+          at.setSeconds(0, 0);
+          found = [{ place: c.place, title: c.title, day: dayIn(at, tz), price: c.price ?? 0, items: c.items, at: at.toISOString() }];
         }
+      }
+      if (found.length === 0) { setStatus("No orders found. Use the Confirm order screen or the Reorder tab, with the prices showing."); return; }
+      const ats = found.map((o) => guessAt(o, tz));
+      const { data: have } = await supabase.from("meals").select("eaten_at").eq("route", "app-order").in("eaten_at", ats);
+      const already = new Set(((have ?? []) as { eaten_at: string }[]).map((r) => new Date(r.eaten_at).toISOString()));
+      setLogged(already);
+      setPicked(new Set(found.map((_, i) => i).filter((i) => !already.has(ats[i]))));
+      setOrders(found);
+      setStatus(null);
+    } catch (err) {
+      setStatus(`The reader failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setReading(false);
+    }
   }
 
   // New parts in the picked orders.
@@ -178,8 +189,7 @@ export default function OrderPage() {
         setParts((prev) => new Map(prev).set(k, { ...prev.get(k)!, status: "loading" }));
         try {
           const res = await fetch(`/api/usda?q=${encodeURIComponent(searchFor(v.raw).q)}`, { headers: { Authorization: `Bearer ${token}` } });
-          const body = (await res.json()) as { foods?: UsdaFood[]; error?: string };
-          if (!res.ok) { setParts((prev) => new Map(prev).set(k, { ...prev.get(k)!, status: "error", err: `${res.status} ${body.error ?? ""}` })); continue; }
+          const body = (await res.json()) as { foods?: UsdaFood[] };
           const foods = res.ok ? body.foods ?? [] : [];
           const best = pickFood(foods, v.raw);                                   // your code
           const ordered = best ? [best, ...foods.filter((f) => f.fdcId !== best.fdcId)] : foods;
@@ -256,8 +266,8 @@ export default function OrderPage() {
       <h1 style={{ margin: 0, fontWeight: 500, fontSize: 34, letterSpacing: "-0.02em" }}>Mobile orders</h1>
 
       <label className="card" style={{ display: "flex", flexDirection: "column", gap: 10, cursor: "pointer", position: "relative" }}>
-        <span style={{ fontWeight: 500 }}>{orders ? "Read another screenshot" : "Screenshot your Reorder tab"}</span>
-        <span className="muted" style={{ fontSize: 13 }}>One screenshot logs every order on it. Read on your phone; the image isn&apos;t saved.</span>
+        <span style={{ fontWeight: 500 }}>{orders ? "Read another screenshot" : "Screenshot your order"}</span>
+        <span className="muted" style={{ fontSize: 13 }}>Today&apos;s order: the Confirm order screen. Past days: the Reorder tab logs every order on it. Read on your phone; the image isn&apos;t saved.</span>
         <input type="file" accept="image/*" onChange={onPick} disabled={reading || busy}
           style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
         <span style={{ minHeight: 48, borderRadius: 16, background: "var(--ink)", color: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
@@ -333,7 +343,7 @@ export default function OrderPage() {
                     )}
                     {(p.status === "none" || p.status === "error") && (
                       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-                        {p.status === "error" ? `USDA didn't answer (${p.err ?? "network"}).` : "No USDA match."} kcal:
+                        <span className="muted">{p.status === "error" ? "USDA didn't answer." : "No USDA match."} kcal:</span>
                         <input inputMode="decimal" value={p.manual} onChange={(e) => set(k, { manual: e.target.value })} style={{ ...field, width: 90 }} aria-label={`Calories for ${p.name}`} />
                       </label>
                     )}
