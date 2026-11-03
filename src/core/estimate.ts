@@ -1,5 +1,3 @@
-
-
 /*
  T30. Turn a USDA food (values per 100 g) + a part name + a portion into a calorie estimate.
  Plate always shows these as estimates ("≈ 215 kcal, 194 to 237"), never as facts.
