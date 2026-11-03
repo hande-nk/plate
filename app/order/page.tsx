@@ -183,7 +183,11 @@ export default function OrderPage() {
       <label className="card" style={{ display: "flex", flexDirection: "column", gap: 8, cursor: "pointer" }}>
         <span style={{ fontWeight: 500 }}>{orders ? "Read another screenshot" : "Screenshot your Reorder tab"}</span>
         <span className="muted" style={{ fontSize: 13 }}>One screenshot logs every order on it. Read on your phone; the image isn&apos;t saved.</span>
-        <input type="file" accept="image/*" onChange={onPick} disabled={reading || busy} />
+        <input type="file" accept="image/*" onChange={onPick} disabled={reading || busy}
+                style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
+        <span style={{ minHeight: 48, borderRadius: 16, background: "var(--ink)", color: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+            {reading ? "Reading…" : "Choose screenshot"}
+        </span>
       </label>
 
       {status && <div className="card" role="status">{status}</div>}
