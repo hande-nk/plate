@@ -292,7 +292,7 @@ export default function LogPage() {
             )}
 
             {image && <img src={image} alt="" style={{width: "100%", borderRadius: 14}} /> }
-
+            <Usuals />
             <Link href="/snack" className="muted" style={{ fontSize: 15, minHeight: 44, display: "flex", alignItems: "center" }}>
                 Packaged snack? Read the label →
             </Link>
