@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { fill, slotValues } from "@/core/story";
 import type { FoundClue } from "@/lib/caseFile";
-import { SCENE_1, SCENE_2, SCENE_3, SCENE_4, SCENE_5, SCENE_ON_CASE, SCENE_PRIYA, SCENE_BAR, PRIYA, SALADBAR } from "@/lib/storyArt";
+import { SCENE_1, SCENE_2, SCENE_3, SCENE_4, SCENE_5, SCENE_6, SCENE_ON_CASE, SCENE_PRIYA, SCENE_BAR, PRIYA, SALADBAR } from "@/lib/storyArt";
 
 const HALL: Record<string, string> = { hodge: "HODGDON", carm: "CARM", dewick: "DEWICK", kindlevan: "KINDLEVAN" };
 const PORTRAIT: Record<string, string> = { priya: PRIYA, bar: SALADBAR };
@@ -17,15 +17,16 @@ export function sceneFor(ord: number, hall: string | null): string {
   if (ord === 3) return SCENE_3;
   if (ord === 4) return SCENE_4;
   if (ord === 5) return SCENE_5;
+  if (ord === 6) return SCENE_6;
   return SCENE_ON_CASE;
 }
 
 export function ClueSheetV2({ f, total, earlierChoice, onChoose, onClose }: {
-  f: FoundClue; total: number;
-  earlierChoice: string | null;                      // the answer this clue's choice_lines depend on
-  onChoose: (id: string) => Promise<void>;
-  onClose: () => void;
-}) {
+    f: FoundClue; total: number;
+    earlierChoice: string | null;                      // the answer this clue's choice_lines depend on
+    onChoose: (id: string) => Promise<void>;
+    onClose: () => void;
+ }) {
     const [busy, setBusy] = useState(false);
     const c = f.clue;
     const frame = f.ctx ? fill(c.frame, slotValues(f.ctx)) : "";          // your code
