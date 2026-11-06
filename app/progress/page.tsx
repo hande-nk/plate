@@ -9,6 +9,9 @@ import { dailyRange, type PaceChoice } from "@/core/range";
 import type { Activity, Sex } from "@/core/energy";
 import { weekCalories, type DayBar } from "@/core/calories";
 import { feltGood, type Feeling } from "@/core/feel";
+import { honestyCheck } from "@/core/honesty";
+import { honestyWindow, dayNumber as dn } from "@/core/honestyWindow";
+import { HonestyCard } from "@/components/HonestyCard";
 
 type Span = "week" | "month" | "semester";
 const SPAN_DAYS: Record<Span, number> = { week: 7, month: 30, semester: 120 };
@@ -123,6 +126,9 @@ export default function Progress() {
   const latestKg = weighs.at(-1)?.kg ?? null;
   const range = dailyRange({ heightCm: prof.height_cm, ageYears: prof.age, sex: prof.sex, activity: prof.activity }, latestKg, prof.pace);
   const target = range?.target ?? null;
+  const allTrend = runTrend(weighs.map((w) => ({ day: dn(w.day), kg: w.kg })));
+  const hw = range && weighs[0] ? honestyWindow(meals, allTrend, weighs[0].day, now, prof.tz, range.maintenance) : null;   // your code
+  const honesty = hw ? honestyCheck(hw.input) : null;                                                                      // your code
   const weekOf = mondayOf(today);
   const thisWeek = meals.filter((m) => dayIn(new Date(m.eaten_at), prof.tz) >= weekOf);
   const cal = weekCalories(thisWeek, weekOf, now, prof.tz, target);
@@ -311,9 +317,7 @@ export default function Progress() {
       </Card>
 
       {/* Honesty check: not faked, waits for data */}
-      <div style={{ borderRadius: 20, border: "1px solid #DADAD4", padding: "12px 14px", fontSize: 13 }}>
-        Honesty check {honestyDate ? `arrives around ${honestyDate}` : "starts after your first weigh-in"}: it compares what you logged with your weight trend, after 3 weeks of both.
-      </div>
+         {honesty && hw && <HonestyCard r={honesty} w={hw} hideNumbers={prof.hide_numbers} />}
     </main>
   );
 }
