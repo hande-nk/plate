@@ -6,10 +6,13 @@
 import { useState } from "react";
 import { fill, slotValues } from "@/core/story";
 import type { FoundClue } from "@/lib/caseFile";
-import { SCENE_1, SCENE_2, SCENE_3, SCENE_4, SCENE_5, SCENE_6, SCENE_ON_CASE, SCENE_PRIYA, SCENE_BAR, PRIYA, SALADBAR } from "@/lib/storyArt";
+import { SCENE_1, SCENE_2, SCENE_3, SCENE_4, SCENE_5, SCENE_6, SCENE_7, SCENE_8, SCENE_ON_CASE, SCENE_PRIYA, SCENE_BAR, SCENE_TELL, SCENE_PROTECT,
+  PRIYA, SALADBAR, PRUITT, HUSEYIN } from "@/lib/storyArt";
+import { VoiceNote } from "@/components/VoiceNote";
 
 const HALL: Record<string, string> = { hodge: "HODGDON", carm: "CARM", dewick: "DEWICK", kindlevan: "KINDLEVAN" };
-const PORTRAIT: Record<string, string> = { priya: PRIYA, bar: SALADBAR };
+const PORTRAIT: Record<string, string> = { priya: PRIYA, bar: SALADBAR, tell: PRUITT, protect: HUSEYIN };
+const CHOICE_ART: Record<string, string> = { priya: SCENE_PRIYA, bar: SCENE_BAR, tell: SCENE_TELL, protect: SCENE_PROTECT };
 
 export function sceneFor(ord: number, hall: string | null): string {
   if (ord === 1) return SCENE_1.replace("%HALL%", hall ? HALL[hall] ?? "CAMPUS" : "CAMPUS");
@@ -18,20 +21,22 @@ export function sceneFor(ord: number, hall: string | null): string {
   if (ord === 4) return SCENE_4;
   if (ord === 5) return SCENE_5;
   if (ord === 6) return SCENE_6;
+  if (ord === 7) return SCENE_7;
+  if (ord === 8) return SCENE_8;
   return SCENE_ON_CASE;
 }
 
 export function ClueSheetV2({ f, total, earlierChoice, onChoose, onClose }: {
-    f: FoundClue; total: number;
-    earlierChoice: string | null;                      // the answer this clue's choice_lines depend on
-    onChoose: (id: string) => Promise<void>;
-    onClose: () => void;
- }) {
+  f: FoundClue; total: number;
+  earlierChoice: string | null;                      // the answer this clue's choice_lines depend on
+  onChoose: (id: string) => Promise<void>;
+  onClose: () => void;
+}) {
     const [busy, setBusy] = useState(false);
     const c = f.clue;
     const frame = f.ctx ? fill(c.frame, slotValues(f.ctx)) : "";          // your code
     const extra = earlierChoice && c.choice_lines?.[earlierChoice] ? c.choice_lines[earlierChoice] : null;
-    const extraArt = extra && earlierChoice === "priya" ? SCENE_PRIYA : extra && earlierChoice === "bar" ? SCENE_BAR : null;
+    const extraArt = extra && earlierChoice ? CHOICE_ART[earlierChoice] ?? null : null;
 
     return (
         <div role="dialog" aria-modal="true" aria-label={`Clue ${c.ord}: ${c.title}`} onClick={() => !busy && onClose()}
@@ -44,6 +49,7 @@ export function ClueSheetV2({ f, total, earlierChoice, onChoose, onClose }: {
             </div>
             <svg viewBox="0 0 320 200" width="100%" role="img" aria-label={`Scene for clue ${c.ord}`} style={{ borderRadius: 18, background: "#F4F4F1" }}
             dangerouslySetInnerHTML={{ __html: sceneFor(c.ord, f.ctx?.hall ?? null) }} />
+            {c.voice && <VoiceNote who={c.voice.who} text={c.voice.text} />}
             <div style={{ fontSize: 17, lineHeight: 1.5 }}>
             {frame && <i style={{ color: "var(--stone)" }}>{frame} </i>}{c.body}
             </div>
