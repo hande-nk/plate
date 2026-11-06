@@ -4,9 +4,10 @@ import type { Feeling } from "@/core/feel";
 
 // One clue row as stored (migration 0008 + 0012).
 export type ClueRow = {
-    ord: number; title: string; body: string; frame: string; place: string | null;
-    choice_prompt: string | null; choice_options: { id: string; label: string }[] | null;
-    choice_lines: Record<string, string> | null; choice_from: number | null;
+  ord: number; title: string; body: string; frame: string; place: string | null;
+  choice_prompt: string | null; choice_options: { id: string; label: string }[] | null;
+  choice_lines: Record<string, string> | null; choice_from: number | null;
+  voice: { who: string; text: string } | null;      // a voice note in this clue (migration 0015)
 };
 export type FoundClue = { clue: ClueRow; foundAt: string; plateAt: string | null; choice: string | null; ctx: ClueCtx | null; photoKey: string | null };
 
@@ -15,7 +16,7 @@ type MealRow = { eaten_at: string; dish_name: string; feeling: Feeling | null; p
 // Everything the Case File and the clue sheet need, in one load.
 export async function loadCase(): Promise<{ clues: ClueRow[]; found: FoundClue[]; choices: Map<number, string> }> {
     const [c, u, p] = await Promise.all([
-        supabase.from("clues").select("ord, title, body, frame, place, choice_prompt, choice_options, choice_lines, choice_from").order("ord"),
+        supabase.from("clues").select("ord, title, body, frame, place, choice_prompt, choice_options, choice_lines, choice_from, voice").order("ord"),
         supabase.from("user_clues").select("clue_id, found_at, plate_at, choice").order("found_at"),
         supabase.from("profiles").select("tz, mention_dishes").maybeSingle(),
     ]);
