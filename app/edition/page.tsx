@@ -124,7 +124,7 @@ function EditionPage() {
         const first = plates[0] ? mondayOf(dayIn(new Date(plates[0].at), tz)) : weekOf;
         const number = Math.max(1, Math.round((Date.parse(weekOf) - Date.parse(first)) / (7 * DAY_MS)) + 1);
 
-        setData({ tz, hideWeight: Boolean(p.data.hide_weight), weekOf, number, edition, weekPlates, photoKeys, change, clue, cluesFound: found.length });
+        setData({ tz, hideWeight: Boolean(p.data.hide_weight), weekOf, number, edition, weekPlates, photoKeys, change, clue, cluesFound: found.length, deduction });
         })();
     }, [router, params]);
 
