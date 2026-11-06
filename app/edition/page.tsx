@@ -13,6 +13,8 @@ import { runTrend } from "@/core/kalman";
 import { editionPicks, type Edition, type EditionPlate, type WinKind } from "@/core/edition";
 import type { Feeling } from "@/core/feel";
 import { Safiye } from "@/components/Safiye";
+import { weeklyDeduction, type Deduction } from "@/core/deduce";
+import { DeductionCard } from "@/components/DeductionCard";
 
 const DAY_MS = 864e5;
 const TOTAL_CLUES = 8;
@@ -37,6 +39,7 @@ type Loaded = {
     tz: string; hideWeight: boolean; weekOf: string; number: number;
     edition: Edition; weekPlates: EditionPlate[]; photoKeys: Map<string, string>;
     change: number | null; clue: Clue | null; cluesFound: number;
+    deduction: Deduction | null;
 };
 
 // useSearchParams needs a Suspense boundary or the Next build fails.
@@ -96,7 +99,8 @@ function EditionPage() {
         const treatsEnjoyed = ((t.data ?? []) as { day: string; eaten_at: string | null }[])
             .filter((r) => r.day >= weekOf && r.day <= end && r.eaten_at !== null).length;
 
-        const edition = editionPicks({ weekOf, tz, plates, weighIns: weighs.map((x) => x.day), treatsEnjoyed });   // your code
+        const edition = editionPicks({ weekOf, tz, plates, weighIns: weighs.map((x) => x.day), treatsEnjoyed });  
+        const deduction = weeklyDeduction(plates, weekOf, tz);
         const weekPlates = plates.filter((pl) => { const d = dayIn(new Date(pl.at), tz); return d >= weekOf && d <= end; });
 
         // Weight change across the week, from your Kalman trend (needs a weigh-in this week and one before it or in it).
@@ -232,6 +236,11 @@ function EditionPage() {
             </span>
             </div>
         </div>
+
+        {data.deduction && (
+            <DeductionCard d={data.deduction}
+            photos={data.weekPlates.filter((p) => photos.has(p.at)).map((p) => photos.get(p.at)!)} />
+        )}
 
         {/* Your week in plates (photos on this phone only) */}
         {withPhotos.length > 0 && (
