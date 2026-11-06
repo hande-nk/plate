@@ -39,12 +39,12 @@ export function slotValues(ctx: ClueCtx): Record<string, string | null> {
 // Fill slots in a text. [optional parts] vanish if any slot inside is null.
 // A null slot OUTSIDE brackets throws. An unknown slot name throws anywhere.
 export function fill(text: string, v: Record<string, string | null>): string {
-    const one = (s: string) => s.replace(/\{(\w+)\}/g, (text, k) => {
+    const one = (s: string) => s.replace(/\{(\w+)\}/g, (_, k) => {
         if (!(k in v)) throw new Error(`unknown slot ${k}`);
         return v[k] ?? "\u0000";                       // a marker meaning "this slot was empty"
     });
     return text
-        .replace(/\[([^\[\]]*)\]/g, (k, inner) => { const f = one(inner); return f.includes("\u0000") ? "" : f; })
+        .replace(/\[([^\[\]]*)\]/g, (_, inner) => { const f = one(inner); return f.includes("\u0000") ? "" : f; })
         .replace(/\{(\w+)\}/g, (m) => { const f = one(m); if (f.includes("\u0000")) throw new Error(`missing required ${m}`); return f; });
 }
 // frame + " " + body, plus " " + the line for your choice (if there is one). Then squash spaces,
