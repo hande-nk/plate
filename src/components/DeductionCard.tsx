@@ -12,7 +12,7 @@ const RED = "#B3261E";
 export function deductionLine(d: Deduction): string {
   switch (d.kind) {
     case "hall":
-      return `Kuzum, a detective notices things. ${numberWord(d.good, true)} of your ${numberWord(d.rated)} ${HALL[d.hall] ?? d.hall} plates this week felt ${d.feeling}. In 1987 they also said coincidence.`;
+        return `Kuzum, a detective notices things. ${d.good === d.rated ? `All ${numberWord(d.rated)}` : `${numberWord(d.good, true)}`} of your ${d.good === d.rated ? "" : `${numberWord(d.rated)} `}${HALL[d.hall] ?? d.hall} plates this week felt ${d.feeling}. In 1987 they also said coincidence.`;
     case "new":
       return `${numberWord(d.count, true)} dishes you had never logged before, all in one week. Kuzum, a good detective always tries the soup.`;
     case "time":
