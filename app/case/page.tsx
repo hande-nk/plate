@@ -13,6 +13,7 @@ import { loadCase, saveChoice, type ClueRow, type FoundClue } from "@/lib/caseFi
 import { ClueSheetV2 } from "@/components/ClueSheetV2";
 import { FOOD_CROISSANT, FOOD_PLATE, FOOD_WRAP } from "@/lib/storyArt";
 import { Safiye } from "@/components/Safiye";
+import { slotValues } from "@/core/story";
 
 const HALL: Record<string, string> = { hodge: "Hodgdon", carm: "Carm", dewick: "Dewick", kindlevan: "Kindlevan" };
 const RED = "#B3261E";
@@ -68,10 +69,11 @@ function CasePage() {
     const nextLocked = clues.find((c) => !byOrd.has(c.ord))?.ord ?? null;
     const away = nextLocked ? Math.max(1, (THRESHOLDS[nextLocked - 1] ?? 0) - platesEver) : null;
     const openF = open ? byOrd.get(open) ?? null : null;
-    const fmt = (f: FoundClue) => f.ctx
-        ? `${f.ctx.hall ? `${HALL[f.ctx.hall] ?? ""} · ` : ""}${new Date(f.ctx.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: f.ctx.tz })}`
-        : new Date(f.foundAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
+    const fmt = (f: FoundClue) => {
+        if (!f.ctx) return new Date(f.foundAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const v = slotValues({ ...f.ctx, mentionDishes: false });
+        return `${v.hall ? `${v.hall} · ` : ""}${v.day!.slice(0, 3)} ${v.time}`;
+    };
     return (
         <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 120px", display: "flex", flexDirection: "column", gap: 14 }}>
         <Link href="/" className="muted" style={{ textDecoration: "none", fontSize: 13 }}>← Home</Link>
