@@ -14,12 +14,12 @@ type Prof = {
   height_cm: number; age: number; sex: Sex; activity: Activity; pace: PaceChoice;
   avoids: string[] | null; allergy_note: string | null; motivations: string[] | null;
   lunch_nudge: boolean; weigh_reminder: boolean; sunday_edition: boolean;
-  hide_numbers: boolean; hide_weight: boolean;
+  hide_numbers: boolean; hide_weight: boolean; mention_dishes: boolean;
   tz: string;
 };
 type NotifyKey = "lunch_nudge" | "weigh_reminder" | "sunday_edition";
 
-const COLS = "height_cm, age, sex, activity, pace, avoids, allergy_note, motivations, lunch_nudge, weigh_reminder, sunday_edition, hide_numbers, hide_weight, tz";
+const COLS = "height_cm, age, sex, activity, pace, avoids, allergy_note, motivations, lunch_nudge, weigh_reminder, sunday_edition, hide_numbers, hide_weight, mention_dishes, tz";;
 
 function Toggle({ label, note, on, onChange, disabled }: { label: string; note?: string; on: boolean; onChange?: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -263,12 +263,14 @@ export default function ProfilePage() {
         <Toggle label="Friends" note="(spring, opt-in)" on={false} disabled />
       </div>
       <div className="muted" style={{ fontSize: 12 }}>At most two a day. Nothing after 9pm.</div>
+      
 
       {/* Privacy */}
       <div className="q">Privacy</div>
       <div className="card list">
         <Toggle label="Hide calorie numbers" on={prof.hide_numbers} onChange={(v) => save({ hide_numbers: v })} />
         <Toggle label="Hide my weight" on={prof.hide_weight} onChange={(v) => save({ hide_weight: v })} />
+        <Toggle label="Safiye may mention my dishes" note="(off: only where and when)" on={prof.mention_dishes} onChange={(v) => save({ mention_dishes: v })} />
         <div className="row"><span>Photos stay on this phone</span><span className="muted">Always</span></div>
       </div>
 

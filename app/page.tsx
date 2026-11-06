@@ -98,7 +98,7 @@ export default function Today() {
       setCases(rows);
       const n = Number(new URLSearchParams(window.location.search).get("clue"));
       const hit = rows.find((r) => r.clue_id === n);
-      if (hit) setSheet(hit.clues);
+      if (hit) router.replace(`/case?open=${n}`);
     });
 }, [ready]);
 
@@ -198,19 +198,21 @@ export default function Today() {
             <div style={{ fontWeight: 500 }}>{treat.name}</div>
           </div>
         )}
-
-    <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none", display: "flex", gap: 14, alignItems: "center" }}>
-      <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
-        <Safiye mood="kuzum" size={64} />
-      </div>
-      <div style={{ display: "grid", gap: 6, flex: 1 }}>
-        <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanım • case file No. 1</div>
-        <div style={{ fontSize: 15, lineHeight: 1.4 }}>
-          {cases[0] ? <>Clue {cases[0].clues.ord}: {cases[0].clues.title}.</> : <>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</>}
+    <Link href="/case"> 
+      <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none", display: "flex", gap: 14, alignItems: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
+          <Safiye mood="kuzum" size={64} />
         </div>
-        <CaseMeter found={cases.length} dark />
+        <div style={{ display: "grid", gap: 6, flex: 1 }}>
+          <div style={{ fontSize: 12, opacity: 0.65 }}>Safiye Hanım • case file No. 1</div>
+          <div style={{ fontSize: 15, lineHeight: 1.4 }}>
+            {cases[0] ? <>Clue {cases[0].clues.ord}: {cases[0].clues.title}.</> : <>&ldquo;Kuzum, the case is open. Every plate you log is a clue.&rdquo;</>}
+          </div>
+          <CaseMeter found={cases.length} dark />
+        </div>
       </div>
-    </div>
+    </Link>
+    
 
       </main>
 
