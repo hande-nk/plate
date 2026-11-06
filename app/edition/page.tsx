@@ -15,6 +15,8 @@ import type { Feeling } from "@/core/feel";
 import { Safiye } from "@/components/Safiye";
 import { weeklyDeduction, type Deduction } from "@/core/deduce";
 import { DeductionCard } from "@/components/DeductionCard";
+import { TreatProposal } from "@/components/TreatProposal";
+import { dailyRange } from "@/core/range";
 
 const DAY_MS = 864e5;
 const TOTAL_CLUES = 8;
@@ -40,6 +42,7 @@ type Loaded = {
     edition: Edition; weekPlates: EditionPlate[]; photoKeys: Map<string, string>;
     change: number | null; clue: Clue | null; cluesFound: number;
     deduction: Deduction | null;
+    target: number | null;
 };
 
 // useSearchParams needs a Suspense boundary or the Next build fails.
@@ -59,7 +62,7 @@ function EditionPage() {
         const { data: s } = await supabase.auth.getSession();
         if (!s.session) { router.replace("/login"); return; }
         const [p, m, w, t, c] = await Promise.all([
-            supabase.from("profiles").select("tz, hide_weight").maybeSingle(),
+            supabase.from("profiles").select("height_cm, age, sex, activity, pace, tz, hide_weight").maybeSingle(),
             supabase.from("meals").select("eaten_at, photo_key, dish_name, feeling, dishes(hall)").order("eaten_at"),
             supabase.from("weigh_ins").select("day, kg").order("day"),
             supabase.from("planned_treats").select("day, eaten_at"),
@@ -69,6 +72,7 @@ function EditionPage() {
         if (err) { setError(err.message); return; }
         if (!p.data) { router.replace("/welcome"); return; }
         const tz: string = p.data.tz ?? "America/New_York";
+        
 
         // Which week: the one ending on the most recent Sunday (today, if it's Sunday). ?week=YYYY-MM-DD overrides.
         const today = dayIn(new Date(), tz);
@@ -96,6 +100,7 @@ function EditionPage() {
         });
 
         const weighs = ((w.data ?? []) as { day: string; kg: number }[]).map((r) => ({ day: r.day, kg: Number(r.kg) }));
+        const range = dailyRange({ heightCm: Number(p.data.height_cm), ageYears: Number(p.data.age), sex: p.data.sex, activity: p.data.activity }, weighs.at(-1)?.kg ?? null, p.data.pace);
         const treatsEnjoyed = ((t.data ?? []) as { day: string; eaten_at: string | null }[])
             .filter((r) => r.day >= weekOf && r.day <= end && r.eaten_at !== null).length;
 
@@ -124,7 +129,7 @@ function EditionPage() {
         const first = plates[0] ? mondayOf(dayIn(new Date(plates[0].at), tz)) : weekOf;
         const number = Math.max(1, Math.round((Date.parse(weekOf) - Date.parse(first)) / (7 * DAY_MS)) + 1);
 
-        setData({ tz, hideWeight: Boolean(p.data.hide_weight), weekOf, number, edition, weekPlates, photoKeys, change, clue, cluesFound: found.length, deduction });
+        setData({ tz, hideWeight: Boolean(p.data.hide_weight), weekOf, number, edition, weekPlates, photoKeys, change, clue, cluesFound: found.length, deduction, target: range?.target ?? null });
         })();
     }, [router, params]);
 
@@ -241,6 +246,7 @@ function EditionPage() {
             <DeductionCard d={data.deduction}
             photos={data.weekPlates.filter((p) => photos.has(p.at)).map((p) => photos.get(p.at)!)} />
         )}
+           <TreatProposal weekOf={addDays(weekOf, 7)} tz={tz} target={data.target} />
 
         {/* Your week in plates (photos on this phone only) */}
         {withPhotos.length > 0 && (

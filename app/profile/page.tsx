@@ -264,7 +264,10 @@ export default function ProfilePage() {
       </div>
       <div className="muted" style={{ fontSize: 12 }}>At most two a day. Nothing after 9pm.</div>
       
-
+      <Link href="/treats" className="row card" style={{ textDecoration: "none", color: "inherit" }}>
+        <span>Treat board</span><span className="muted">›</span>
+      </Link>
+      
       {/* Privacy */}
       <div className="q">Privacy</div>
       <div className="card list">
