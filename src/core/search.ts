@@ -23,7 +23,7 @@ export function withinOne(a: string, b: string): boolean {
 }
 
 function tokenScore(t: string, words: string[]): number {
-    if (words.some((w) => w === t)) return 2;                       // clean hit
+    if (words.some((w) => w.startsWith(t))) return 2;                       // clean hit
     if (t.length >= 4 && words.some((w) => withinOne(t, w))) return 1;  // typo hit
     return 0;
 }
@@ -48,7 +48,7 @@ export function searchDishes<T extends SearchDish>(
         else {
         const per = tokens.map((t) => tokenScore(t, words));
         if (per.some((p) => p === 0)) continue;           // a query word missed: dish is out
-        score = per.every((p) => p === 2) ? 100 : 40;
+        score = per.every((p) => p === 2) ? 60 : 40;
         }
         if (opts.hall && d.hall === opts.hall) score += 10;
         scored.push({ d, score, n });
