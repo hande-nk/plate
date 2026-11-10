@@ -2,40 +2,54 @@
 // Board is row by row. Tile k belongs at index k-1. 0 is the empty slot (always last when solved).
 export type Board = number[];
 
-// [1, 2, ..., n*n-1, 0]
 export function solved(n: number): Board {
-  throw new Error("TODO");
+  // index i holds i + 1, except the last index, which holds the gap
+  return Array.from({ length: n * n }, (_, i) => (i === n * n - 1 ? 0 : i + 1));
 }
 
-// true when every tile is home and the gap is last.
 export function isSolved(b: Board): boolean {
-  throw new Error("TODO");
+  // same rule as solved, checked at every index
+  return b.every((v, i) => v === (i === b.length - 1 ? 0 : i + 1));
 }
 
-// Indexes of tiles that can slide into the gap, sorted ascending.
-// Up and down: e - n, e + n. Left and right: e - 1, e + 1.
-// Careful: left/right must stay on the gap's row (no wrapping from column 0 to the row above).
 export function movable(b: Board, n: number): number[] {
-  throw new Error("TODO");
+  const e = b.indexOf(0);
+  const r = Math.floor(e / n), c = e % n;
+  const out: number[] = [];
+  if (r > 0)     out.push(e - n); // tile above the gap
+  if (r < n - 1) out.push(e + n); // tile below
+  if (c > 0)       out.push(e - 1); // tile on the left
+  if (c < n - 1) out.push(e + 1);   // tile on the right
+  return out.sort((a, b2) => a - b2);
 }
 
-// Slide tile at index i into the gap. Returns a NEW board.
-// Illegal tap (not in movable): return the same board reference, unchanged.
 export function move(b: Board, n: number, i: number): Board {
-  throw new Error("TODO");
+  if (!movable(b, n).includes(i)) return b;// illegal tap: return the same board
+  const next = b.slice();         // copy first, never change b
+  const e = b.indexOf(0);
+  [next[e], next[i]] = [next[i], next[e]];
+  return next;
 }
 
-// Inversions: pairs of tiles (ignore 0) where a bigger number comes before a smaller one.
-// Odd n: solvable when inversions are even.
-// Even n: let rowFromBottom = the gap's row counted from the bottom, starting at 1.
-//         solvable when inversions + rowFromBottom is odd.
 export function isSolvable(b: Board, n: number): boolean {
-  throw new Error("TODO");
+  const tiles = b.filter((v) => v !== 0);
+  let inv = 0;
+  for (let i = 0; i < tiles.length; i++)
+    for (let j = i + 1; j < tiles.length; j++)
+      if (tiles[i] > tiles[j]) inv++;
+  if (n % 2 === 1) return inv % 2 === 0;
+  const rowFromBottom = n - Math.floor(b.indexOf(0) / n);
+  return (inv + rowFromBottom) % 2 === 1;
 }
 
-// Start from solved(n) and make `steps` random legal moves.
-// Pick with rand() in [0, 1). Never slide back the tile you just moved (no undo).
-// If you end up solved, keep moving until you are not.
 export function shuffle(n: number, steps: number, rand: () => number): Board {
-  throw new Error("TODO");
+  let b = solved(n);
+  let prev = -1;                  // where the gap was before the last move
+  for (let k = 0; k < steps || isSolved(b); k++) {
+    const options = movable(b, n).filter((i) => i !== prev);
+    const i = options[Math.floor(rand() * options.length)];
+    prev = b.indexOf(0);
+    b = move(b, n, i);
+  }
+  return b;
 }
