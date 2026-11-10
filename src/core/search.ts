@@ -1,37 +1,58 @@
 // T41a: "Missing something?" search on /log. Finds any dish in your library in two taps.
 export type SearchDish = { id: number; name: string; hall: string | null };
 
-// Lowercase, strip accents (crêpe -> crepe), turn anything that isn't a-z or 0-9 into a space,
-// collapse runs of spaces, trim.  Hint: s.normalize("NFD") splits "ê" into "e" + an accent mark (̀-ͯ).
 export function normalize(s: string): string {
-  throw new Error();
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // drop accent marks
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")                                // anything else -> one space
+    .trim();                                                     // ends
 }
 
-// true when a and b are at most ONE edit apart: one letter changed, added, or removed.
-// Do it in one pass with two pointers (no edit-distance table).
-// If the lengths differ by more than 1, it's false right away.
 export function withinOne(a: string, b: string): boolean {
-  throw new Error();
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+        if (a[i] === b[j]) { i++; j++; continue; }
+        if (++edits > 1) return false;
+        if (a.length > b.length) i++;        // a has the extra letter
+        else if (a.length < b.length) j++;   // b has the extra letter
+        else { i++; j++; }                   // swapped letter
+    }
+    // letters left over at the end also count as edits
+    return edits + (a.length - i) + (b.length - j) <= 1;
 }
 
-// Search rules, after normalize() on both sides:
-// - blank query -> []
-// - skip ids in opts.exclude (dishes already picked)
-// - score each dish:
-//     name === query                    100
-//     name starts with query            80
-//     else, split both into words. EVERY query word must hit some name word:
-//       prefix of a name word = clean hit; else withinOne with a name word (query word 4+ letters) = typo hit;
-//       otherwise the dish is out.
-//     all clean hits                    60
-//     any typo hit                      40
-// - same hall as opts.hall: +10
-// - sort: score high to low, then shorter normalized name, then alphabetical
-// - return at most opts.limit (default 8), as the original objects (keep extra fields)
+function tokenScore(t: string, words: string[]): number {
+    if (words.some((w) => w === t)) return 2;                       // clean hit
+    if (t.length >= 4 && words.some((w) => withinOne(t, w))) return 1;  // typo hit
+    return 0;
+}
+
 export function searchDishes<T extends SearchDish>(
-  query: string,
-  dishes: T[],
+  query: string, dishes: T[],
   opts: { hall?: string | null; exclude?: number[]; limit?: number } = {},
 ): T[] {
-  throw new Error();
+    const q = normalize(query);
+    if (!q) return [];
+    const tokens = q.split(" ");
+    const skip = new Set(opts.exclude ?? []);
+    const limit = opts.limit ?? 8;
+    const scored: { d: T; score: number; n: string }[] = [];
+    for (const d of dishes) {
+        if (skip.has(d.id)) continue;
+        const n = normalize(d.name);
+        const words = n.split(" ");
+        let score: number;
+        if (n === q) score = 100;
+        else if (n.startsWith(q)) score = 80;
+        else {
+        const per = tokens.map((t) => tokenScore(t, words));
+        if (per.some((p) => p === 0)) continue;           // a query word missed: dish is out
+        score = per.every((p) => p === 2) ? 100 : 40;
+        }
+        if (opts.hall && d.hall === opts.hall) score += 10;
+        scored.push({ d, score, n });
+    }
+    scored.sort((a, b) => b.score - a.score || a.n.length - b.n.length || a.n.localeCompare(b.n));
+    return scored.slice(0, limit).map((s) => s.d);
 }
