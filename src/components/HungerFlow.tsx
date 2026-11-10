@@ -6,9 +6,12 @@ import { supabase } from "@/lib/supabase";
 import { hungerCheck, type HungerPath } from "@/core/hunger";
 import { TeaGlass } from "@/components/TeaGlass";
 import { Safiye } from "@/components/Safiye";
+import { GlassPuzzle } from "@/components/GlassPuzzle";
 
 type Kind = "hungry" | "dessert";
-type Activity = "tea" | "walk" | "text";
+type Activity = "tea" | "walk" | "text" | "puzzle";
+
+
 type Outcome = "ate" | "waited" | "ate_after_wait" | "planned_later";
 
 export type HungerData = {
@@ -23,6 +26,7 @@ const ACTIVITIES: { id: Activity; label: string }[] = [
   { id: "tea", label: "Make tea" },
   { id: "walk", label: "Short walk" },
   { id: "text", label: "Text someone" },
+  { id: "puzzle", label: "Glass puzzle" },
 ];
 const CONTEXT = ["Studying", "Bored", "With friends", "Tired", "Stressed", "Really hungry"];
 
@@ -176,7 +180,9 @@ export function HungerFlow({ data, onClose }: { data: HungerData; onClose: () =>
         )}
 
         <div className="muted" style={{ fontSize: 14 }}>Cravings often ease once your attention moves. If it&rsquo;s still there after, have it and enjoy it.</div>
-        {late ? <TeaGlass left={left} total={WAIT_SECONDS} /> : <Ring left={left} />}
+        {activity === "puzzle"
+          ? <GlassPuzzle onClose={() => setActivity(late ? "tea" : null)} />
+          : late ? <TeaGlass left={left} total={WAIT_SECONDS} /> : <Ring left={left} />}
         <div role="group" aria-label="Something to do" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
           {ACTIVITIES.map((a) => chip(a.label, activity === a.id, () => setActivity(activity === a.id ? null : a.id)))}
         </div>
