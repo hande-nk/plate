@@ -12,6 +12,7 @@ import { nextClue } from "@/core/clue";
 import { clueAfterSave } from "@/lib/clueAfterSave";
 import { Usuals } from "@/components/Usuals";
 import Link from "next/link";
+import { MissingDish, type LibraryDish } from "@/components/MissingDish";
 
 type Dish = { id: number; name: string; kcal: number; protein_g: number | null; carbs_g: number | null; fat_g: number | null; count_per_serving: number | null };
 const HALLS: { id: Hall; label: string } [] = [
@@ -311,7 +312,7 @@ export default function LogPage() {
                                     textAlign: "left", cursor: "pointer", fontFamily: "inherit",
                                 }}>
                             <div style={{ fontWeight: 500}}>{dish.name}</div>
-                            <div className="muted">{!hideNumbers && `${dish.kcal} kcal • `}{Math.round(p * 100)}% match</div>
+                            <div className="muted">{!hideNumbers && `${dish.kcal} kcal • `}{p < 0 ? "added by search" : `${Math.round(p * 100)}% match`}</div>
                         </button>
 
 
@@ -343,7 +344,19 @@ export default function LogPage() {
                 );
 
             })}
-
+            
+            {ranked.length > 0 && (
+                <MissingDish
+                    hall={hall}
+                    pickedIds={[...picked.keys()]}
+                    onPick={(d: LibraryDish) => {
+                        // join the list (if it isn't there already) and pick it at 1 serving
+                        setRanked((r) => r.some((x) => x.dish.id === d.id) ? r : [...r, { dish: d, p: -1 }]);
+                        setPicked((prev) => new Map(prev).set(d.id, 1));
+                    }}
+                    hideNumbers={hideNumbers}
+                />
+            )}
             <div className="q">When did you eat?</div>
             <div className="chips" role="group" aria-label="When did you eat?">
             {choicesFor(new Date()).map((c) => (
