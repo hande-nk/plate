@@ -5,30 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Activity } from "@/core/energy";
 import { localDay } from "@/lib/day";
-
-type PaceChoice = "gentle" | "steady" | "track";
-
-const ACTIVITY: { id: Activity; label: string }[] = [
-    { id: "light", label: "Mostly sitting" },
-    { id: "moderate", label: "Walk a lot" },
-    { id: "active", label: "Train often" },
-];
-
-const PACES: { id: PaceChoice; label: string; note: string }[] = [
-    { id: "gentle", label: "Gentle", note: "about 0.25 kg a week" },
-    { id: "steady", label: "Steady", note: "about 0.5 kg a week" },
-    { id: "track", label: "Just track, no target", note: "see trends only" },
-];
-
-const AVOIDS = ["Vegetarian", "Halal", "No dairy", "Allergy", "Done eating by 6pm"];
-
-const MOTIVATIONS = [
-    { id: "proof", label: "Seeing proof", note: "charts, my trend" },
-    { id: "feeling", label: "Feeling good", note: "what works for me" },
-    { id: "new", label: "Something new", note: "dishes, ideas" },
-    { id: "people", label: "People", note: "what campus loves" },
-];
-
+import type { PaceChoice } from "@/core/range";
+import { ACTIVITY, PACES, AVOIDS, MOTIVATIONS } from "@/lib/profileOptions";
 
 //adds the item if missign, removes it if present. return a new array
 function flip(list: string[], item: string): string[] {
@@ -191,10 +169,18 @@ export default function Welcome() {
                         ))}
                     </div>
                     
+                    <div className="muted" style={{ fontSize: 12 }}>
+                        Saved to your profile. Plate doesn&rsquo;t filter or check dishes against these yet.
+                    </div>
                     {avoids.includes("Allergy") && (
-                        <label className="field">What are you allergic to?
-                        <input id="allergy" placeholder="peanuts, shellfish" value={allergy} onChange={(e) => setAllergy(e.target.value)} />
-                        </label>
+                        <>
+                            <label className="field">What are you allergic to?
+                            <input id="allergy" placeholder="peanuts, shellfish" value={allergy} onChange={(e) => setAllergy(e.target.value)} />
+                            </label>
+                            <div className="muted" style={{ fontSize: 12 }}>
+                                For your reference only. Always confirm allergens with dining hall staff.
+                            </div>
+                        </>
                     )}
                 
                     {notice && <div key={tries} className="alert" role="alert">{notice}</div>}

@@ -144,8 +144,24 @@ export default function EvalPage() {
     plates: done,
     dishes: plates.reduce((s, p) => s + new Set(p.truth).size, 0),
     hitAt1: hitAt1(plates), recallAt3: recallAtK(plates, 3), recallAt8: recallAtK(plates, 8),
-    missingFromLibrary: missingTotal, avgMs,
+      missingFromLibrary: missingTotal, avgMs,
   };
+
+  function downloadResults() {
+    const file = {
+      exported_at: new Date().toISOString(),
+      model: "Xenova/clip-vit-base-patch32",
+      mode: "CLIP only, no personal prior",
+      summary,
+      plates,
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `plate-eval-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   return (
     <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 40px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -204,7 +220,10 @@ export default function EvalPage() {
       {done > 0 && (
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" className="btn-quiet" onClick={() => navigator.clipboard.writeText(JSON.stringify({ summary, plates }, null, 2))}>
-            Copy results
+             Copy results
+          </button>
+          <button type="button" className="btn-quiet" onClick={downloadResults}>
+            Download results
           </button>
           <button type="button" className="btn-quiet" onClick={() => setPlates((p) => p.slice(0, -1))}>Undo last plate</button>
         </div>

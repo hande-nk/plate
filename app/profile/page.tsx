@@ -237,11 +237,19 @@ export default function ProfilePage() {
           </button>
         ))}
       </div>
+      <div className="muted" style={{ fontSize: 12 }}>
+        Saved to your profile. Plate doesn&rsquo;t filter or check dishes against these yet.
+      </div>
       {avoids.includes("Allergy") && (
-        <label className="field">What are you allergic to?
-          <input placeholder="peanuts, shellfish" value={allergy} onChange={(e) => setAllergy(e.target.value)}
-            onBlur={() => { const v = allergy.trim() || null; if (v !== prof.allergy_note) save({ allergy_note: v }); }} />
-        </label>
+        <>
+          <label className="field">What are you allergic to?
+            <input placeholder="peanuts, shellfish" value={allergy} onChange={(e) => setAllergy(e.target.value)}
+              onBlur={() => { const v = allergy.trim() || null; if (v !== prof.allergy_note) save({ allergy_note: v }); }} />
+          </label>
+          <div className="muted" style={{ fontSize: 12 }}>
+            For your reference only. Always confirm allergens with dining hall staff.
+          </div>
+        </>
       )}
 
       {/* Motivations */}

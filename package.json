@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval:summary": "tsx scripts/eval-summary.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
@@ -16,6 +17,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/web-push": "^3.6.4",
     "eslint-config-next": "^16.4.3",
+    "tsx": "^4.23.15",
     "typescript": "5.9",
     "vitest": "^5.0.3"
   },
