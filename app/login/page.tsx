@@ -4,9 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// Set to true to allow only @tufts.edu sign-ups. This is a UI check only;
-// for real enforcement, add a Supabase auth hook too.
-const TUFTS_ONLY = false;
 
 // One style for both inputs: 44px tap target, 17px text so iOS doesn't zoom.
 const inputStyle: React.CSSProperties = {
@@ -49,10 +46,6 @@ export default function LoginPage() {
 
     if (signup) {
       const clean = email.trim().toLowerCase();
-      if (TUFTS_ONLY && !clean.endsWith("@tufts.edu")) {
-        setError("Plate is for Tufts students for now. Use your @tufts.edu email.");
-        return;
-      }
       setBusy(true);
       const { data, error } = await supabase.auth.signUp({
         email: clean,
