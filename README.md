@@ -7,8 +7,8 @@ Decisions live in STUDIO_LOG.md (Naz Studio project). Design tokens: `app/global
 
 ```bash
 npm install
-npm test          # 35 failing tests = your to-do list
-npm run dev       # http://localhost:3000, speed test at /spike
+npm test          # 377 tests, all passing
+npm run dev       # http://localhost:3000
 ```
 
 `dev` and `build` use webpack on purpose: Turbopack copies the web worker as a raw .ts file instead of bundling it.
@@ -34,5 +34,5 @@ Run one file at a time: `npx vitest energy`. Stuck? Ask the studio for a hint be
 ## Speed test (the riskiest assumption)
 
 Pass bar: median under 2 s per photo on Naz's iPhone, after the model loads.
-The phone needs HTTPS for WebGPU, so deploy once with `npx vercel` (free Hobby plan) and open `/spike` in Safari.
+The phone needs HTTPS for WebGPU, so deploy once with `npx vercel` (free Hobby plan) and open the app in Safari.
 If it fails on every setting, the matcher moves to a Vercel function (Path B) and nothing else changes.
