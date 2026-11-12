@@ -1,6 +1,6 @@
 //Plate service worker: shows pushes, opens the app on tap
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("active", (e) => e.waitUnitl(self.clients.claim()));
+self.addEventListener("activate", (e) => e.waitUnitl(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
   let data = {};
