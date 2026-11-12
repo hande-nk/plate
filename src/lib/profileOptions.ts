@@ -13,7 +13,14 @@ export const PACES: { id: PaceChoice; label: string; note: string }[] = [
   { id: "track", label: "Just track, no target", note: "see trends only" },
 ];
 
-export const AVOIDS = ["Vegetarian", "Halal", "No dairy", "Allergy", "Done eating by 6pm"];
+export const AVOIDS = ["Vegetarian", "Halal", "No dairy", "Allergy"];
+
+export const GOALS = [
+  { id: "energy", label: "Energy", note: "steady through the day" },
+  { id: "recovery", label: "Recovery", note: "colds, rough weeks" },
+  { id: "focus", label: "Focus", note: "exams, long days" },
+  { id: "comfort", label: "Comfort", note: "warm, easy food" },
+];
 
 export const MOTIVATIONS = [
   { id: "proof", label: "Seeing proof", note: "charts, my trend" },
