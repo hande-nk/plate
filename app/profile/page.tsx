@@ -10,12 +10,12 @@ import { enablePush, disablePush } from "@/lib/push";
 
 type Prof = {
   goals: string[] | null; avoids: string[] | null; allergy_note: string | null; motivations: string[] | null;
-  lunch_nudge: boolean; sunday_edition: boolean; mention_dishes: boolean;
+  lunch_nudge: boolean; sunday_edition: boolean; hide_numbers: boolean; mention_dishes: boolean;
   tz: string;
 };
 type NotifyKey = "lunch_nudge" | "sunday_edition";
 
-const COLS = "goals, avoids, allergy_note, motivations, lunch_nudge, sunday_edition, mention_dishes, tz";
+const COLS = "goals, avoids, allergy_note, motivations, lunch_nudge, sunday_edition, hide_numbers, mention_dishes, tz";
 
 // Keeps at most two: picking a third drops the oldest.
 function pickTwo(list: string[], item: string): string[] {
@@ -200,6 +200,7 @@ export default function ProfilePage() {
       {/* Privacy */}
       <div className="q">Privacy</div>
       <div className="card list">
+        <Toggle label="Hide calorie numbers" on={prof.hide_numbers} onChange={(v) => save({ hide_numbers: v })} />
         <Toggle label="Safiye may mention my dishes" note="(off: only where and when)" on={prof.mention_dishes} onChange={(v) => save({ mention_dishes: v })} />
         <div className="row"><span>Photos stay on this phone</span><span className="muted">Always</span></div>
       </div>
