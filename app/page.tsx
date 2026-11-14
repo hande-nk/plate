@@ -15,6 +15,7 @@ import { HungerFlow } from "@/components/HungerFlow";
 import { localDay } from "@/lib/day";
 import { LogCalendar } from "@/components/LogCalendar";
 import Link from "next/link";
+import { ForYourGoals } from "@/components/ForYourGoals";
 
 type Meal = {
   id: number;
@@ -140,6 +141,7 @@ export default function Today() {
     <main style={{ maxWidth: 430, margin: "0 auto", padding: "52px 18px 120px", display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="muted">{today}</div>
       <h1 style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: "-0.02em" }}>Hi Hande.</h1>
+      <ForYourGoals tz={tz} />
 
       {/* One card, three numbers, like the v3 Today strip */}
       <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "repeat(2, 1fr)" : "repeat(4, 1fr)", padding: "14px 0" }}>
