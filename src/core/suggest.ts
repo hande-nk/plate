@@ -9,7 +9,12 @@ export type Suggestion<T> = { dish: T; wins: number; tries: number; score: numbe
 // Fisher-Yates, from the end: for i = last index down to 1, pick j = floor(rand() * (i + 1)), swap a[i] and a[j].
 // Return a NEW array; never touch the input.
 export function shuffled<T>(arr: T[], rand: () => number): T[] {
-  throw new Error();
+    const out = [...arr];
+    for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
 }
 
 // For each dish: tries = rated plates it was on, wins = plates whose feeling hits ANY chosen goal.
@@ -19,7 +24,7 @@ export function shuffled<T>(arr: T[], rand: () => number): T[] {
 export function dishStats(
   plates: FeltPlate[], goals: Goal[], hits: Record<Goal, string[]>, now: Date, days = 60,
 ): Map<number, { wins: number; tries: number }> {
-  throw new Error();
+    throw new Error();
 }
 
 // 1. No goals -> []. limit defaults to 3.
