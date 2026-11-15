@@ -3,14 +3,8 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Feeling } from "@/core/feel";
+import { FEELINGS } from "@/lib/goals";
 export type { Feeling };
-
-const FEELINGS : { id: Feeling; label: string }[] = [
-    { id: "energized", label: "Energized" },
-    { id: "satisfied", label: "Satisfied" },
-    { id: "heavy", label: "Heavy" },
-    { id: "hungry", label: "Hungry" },
-];
 
 export default function FeelingChips({ mealIds, initial, onChange }: { mealIds: number[]; initial: Feeling | null; onChange?: (f: Feeling | null) => void }) {
     const [feeling, setFeeling] = useState<Feeling | null>(initial);
@@ -18,7 +12,7 @@ export default function FeelingChips({ mealIds, initial, onChange }: { mealIds: 
 
     async function pick(f: Feeling) {
         const prev = feeling;
-        const next = prev === f ? null : f; //tap again to undo
+        const next = prev === f ? null : f; // tap again to undo
         setFeeling(next);
         onChange?.(next);
         setFailed(false);
@@ -26,18 +20,19 @@ export default function FeelingChips({ mealIds, initial, onChange }: { mealIds: 
         if (error) { setFeeling(prev); onChange?.(prev); setFailed(true); }
     }
 
-    const label =FEELINGS.find((x) => x.id === feeling)?.label;
+    const label = FEELINGS.find((x) => x.value === feeling)?.label;
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div className="muted">{label ? `You felt ${label.toLowerCase()}` : "How did it feel?"}</div>
-            <div role="group" aria-label="How did this plate feel?" style={{ display: "grid", gridTemplateColumns: "repeate(4, minmax(0, 1fr))", gap: 6}}>
+            <div role="group" aria-label="How did this plate feel?" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {FEELINGS.map((x) => (
-                    <button key={x.id} type="button" className="choice" aria-pressed={feeling === x.id} onClick={() => pick(x.id)} style={{ fontSize: 13, padding: "0 4px" }}>
+                    <button key={x.value} type="button" className="choice" aria-pressed={feeling === x.value}
+                        onClick={() => pick(x.value as Feeling)} style={{ fontSize: 13, padding: "0 12px" }}>
                         {x.label}
                     </button>
                 ))}
-            </div> 
-            {failed && <div role="alert" className="alert"> Couldn't save it. Try again. </div>}
+            </div>
+            {failed && <div role="alert" className="alert">Couldn&rsquo;t save it. Try again.</div>}
         </div>
     );
 }
