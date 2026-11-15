@@ -1,4 +1,4 @@
-export type Feeling = "energized" | "satisfied" | "heavy" | "hungry";
+export type Feeling = "energized" | "focused" | "satisfied" | "cozy" | "better" | "heavy" | "hungry";
 export const GOOD: readonly Feeling[] = ["energized", "satisfied"];
 
 //one entry per plate  
