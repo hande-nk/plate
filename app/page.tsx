@@ -144,10 +144,8 @@ export default function Today() {
       <ForYourGoals tz={tz} />
 
       {/* One card, three numbers, like the v3 Today strip */}
-      <div className="card" style={{ display: "grid", gridTemplateColumns: hideNumbers ? "repeat(2, 1fr)" : "repeat(4, 1fr)", padding: "14px 0" }}>
-        {!hideNumbers && <Stat label="Today" value={totals.kcal.toLocaleString("en-US")} unit="kcal" />}
-        {!hideNumbers && <Stat label="Protein" value={totals.protein_g === null ? "-" : String(totals.protein_g)} unit="g" divider />}
-        <Stat label="Plates" value={String(plates.size)} divider={!hideNumbers} />
+      <div className="card" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", padding: "14px 0" }}>
+        <Stat label="Plates" value={String(plates.size)} />
         <Stat label="Felt good (wk)" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 18 }}>
@@ -183,7 +181,7 @@ export default function Today() {
               <span className="pill">{time}</span>
               <div style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.3 }}>{names}</div>
               <div className="muted" style={{ fontSize: 15 }}>
-                {!hideNumbers && `${dayTotals(rows).kcal} kcal • `}{rows.length} {rows.length === 1 ? "item" : "items"}
+                {rows.length} {rows.length === 1 ? "item" : "items"}
               </div>
               <FeelingChips mealIds={rows.map((m) => m.id)} initial={rows[0].feeling} onChange={(f) => setPlateFeeling(rows.map((m) => m.id), f)} />
             </div>
@@ -223,7 +221,7 @@ export default function Today() {
         <Link href="/" aria-current="page">Home</Link>
         <Link href="/add">Dishes</Link>
         <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
-        <Link href="/weigh">Weight</Link>
+        <Link href="/progress">Progress</Link>
         <Link href="/profile">Profile</Link>
        
       </nav>
