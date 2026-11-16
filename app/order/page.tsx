@@ -103,7 +103,6 @@ export default function OrderPage() {
   const workerRef = useRef<OcrWorker | null>(null);
   const asked = useRef<Set<string>>(new Set());
   const [tz, setTz] = useState("America/New_York");
-  const [hideNumbers, setHideNumbers] = useState(false);
   const [library, setLibrary] = useState<Dish[]>([]);
   const [orders, setOrders] = useState<Ord[] | null>(null);
   const [picked, setPicked] = useState<Set<number>>(new Set());
@@ -119,10 +118,9 @@ export default function OrderPage() {
       const { data } = await supabase.auth.getSession();
       if (!data.session) { router.replace("/login"); return; }
       const [p, d] = await Promise.all([
-        supabase.from("profiles").select("hide_numbers, tz").maybeSingle(),
+        supabase.from("profiles").select("tz").maybeSingle(),
         supabase.from("dishes").select("id, name, hall, kcal, protein_g, carbs_g, fat_g"),
       ]);
-      setHideNumbers(Boolean(p.data?.hide_numbers));
       if (p.data?.tz) setTz(p.data.tz);
       setLibrary(((d.data ?? []) as Dish[]).map((x) => ({ ...x, kcal: Number(x.kcal) })));
     })();
@@ -291,7 +289,7 @@ export default function OrderPage() {
               <div className="muted" style={{ fontSize: 13 }}>
                 {dateLabel(o.day)} · {new Date(at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz })}
                 {o.place === "hodge" ? " · Hodgdon" : o.place === "kindlevan" ? " · Kindlevan" : ""}
-                {done ? " · already logged" : !hideNumbers && on ? ` · ≈ ${Math.round(total)} kcal` : ""}
+                {done ? " · already logged" : on ? ` · ≈ ${Math.round(total)} kcal` : ""}
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.4 }}>{o.items.join(" · ")}</div>
             </div>
@@ -320,7 +318,7 @@ export default function OrderPage() {
                     {p.status === "loading" && <div className="muted" style={{ fontSize: 13 }}>Looking it up…</div>}
                     {food && est && (
                       <div style={{ fontSize: 14, lineHeight: 1.4 }}>
-                        {hideNumbers ? "Estimate ready" : <><b style={{ fontWeight: 500 }}>≈ {est.kcal} kcal</b> <span className="muted">({est.low} to {est.high}) · {est.grams} g</span></>}
+                        <><b style={{ fontWeight: 500 }}>≈ {est.kcal} kcal</b> <span className="muted">({est.low} to {est.high}) · {est.grams} g</span></>
                         <div className="muted" style={{ fontSize: 12 }}>
                           {food.name.toLowerCase()}{food.brand ? `, ${food.brand}` : ""} · USDA
                           {p.foods.length > 1 && (
