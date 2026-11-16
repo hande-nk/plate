@@ -23,7 +23,6 @@ const num = (s: string) => (s.trim() === "" ? NaN : Number(s.replace(",", ".")))
 export default function Snack() {
   const router = useRouter();
   const workerRef = useRef<OcrWorker | null>(null);
-  const [hideNumbers, setHideNumbers] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
@@ -41,8 +40,6 @@ export default function Snack() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) { router.replace("/login"); return; }
-      const { data: p } = await supabase.from("profiles").select("hide_numbers").maybeSingle();
-      setHideNumbers(Boolean(p?.hide_numbers));
     })();
     return () => { workerRef.current?.terminate(); };
   }, [router]);
@@ -136,7 +133,7 @@ export default function Snack() {
             <label htmlFor="snack-name" style={{ fontSize: 13, color: "var(--stone)" }}>What is it?</label>
             <input id="snack-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kind bar" style={field} autoComplete="off" />
             <div style={{ fontSize: 13, color: "var(--stone)" }}>
-              Per serving{facts.servingSize ? ` (${facts.servingSize})` : ""}{hideNumbers ? "" : `: ${facts.kcal} kcal`}
+              Per serving{facts.servingSize ? ` (${facts.servingSize})` : ""}{`: ${facts.kcal} kcal`}
               {perPacket !== null && ` · ${perPacket} per packet`}
             </div>
           </div>
@@ -173,7 +170,7 @@ export default function Snack() {
             {pickProblem && <div className="alert" role="alert">{pickProblem}</div>}
             {scaled && servings !== null && (
               <div style={{ fontSize: 15 }}>
-                = {sv(servings)}{hideNumbers ? "" : ` · ${scaled.kcal} kcal`}
+                = {sv(servings)}{` · ${scaled.kcal} kcal`}
               </div>
             )}
           </div>
