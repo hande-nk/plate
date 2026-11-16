@@ -1,4 +1,4 @@
-"use client"    
+"use client"
 
 import { useEffect, useState} from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +31,7 @@ type Meal = {
 };
 
 
-//One number in the Today strip, every column after the first gets a thun divider
+// One number in the Today strip; every column after the first gets a thin divider
 function Stat({ label, value, unit, divider }: { label: string; value: string; unit?: string; divider?: boolean }) {
   return (
     <div style={{ padding: "0 14px", display: "grid", gap: 2, borderLeft: divider ? "1px solid var(--hairline)" : undefined }}>
@@ -50,7 +50,6 @@ export default function Today() {
   const [ready, setReady] = useState(false);
   const [meals, setMeals] = useState<Meal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hideNumbers, setHideNumbers] = useState(false);
   const [cases, setCases] = useState<{ clue_id: number; clues: Clue }[]>([]);
   const [sheet, setSheet] = useState<Clue | null>(null);
   const [tz, setTz] = useState("America/New_York");
@@ -61,9 +60,8 @@ export default function Today() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if(!data.session) { router.replace("/login"); return; }
-      const { data: prof } = await supabase.from("profiles").select("onboarded_at, hide_numbers, tz").maybeSingle();
+      const { data: prof } = await supabase.from("profiles").select("onboarded_at, tz").maybeSingle();
       if(!prof?.onboarded_at) { router.replace("/welcome"); return; }
-      setHideNumbers(Boolean(prof.hide_numbers));
       if (prof.tz) setTz(prof.tz);
       setReady(true);
     })();
@@ -75,11 +73,9 @@ export default function Today() {
       .then(({ data }) => setTreat(data ? { id: data.id, name: data.name, eaten: !!data.eaten_at } : null));
   }, [ready]);
 
-  //today's meals, from midnight on this phone
+  // this week's meals (Today shows today's; Felt good uses the week)
   useEffect(() => {
     if(!ready) return;
-    //const start = new Date();
-    //start.setHours(0, 0, 0, 0);
     supabase
       .from("meals")
       .select("id, eaten_at, dish_name, portion, kcal, protein_g, carbs_g, fat_g, photo_key, feeling")
@@ -114,7 +110,6 @@ export default function Today() {
   const plateTimes = Array.from(new Set(week.map((m) => `${m.eaten_at}|${m.photo_key ?? ""}`)))
   .map((key) => new Date(key.split("|")[0]));
   const win = weekWins(plateTimes, new Date());
-  const totals = dayTotals(list);
   // One feeling per plate this week (same key as the plate cards)
   const weekPlates = new Map<string, Meal>();
   for (const m of week) weekPlates.set(`${m.eaten_at}|${m.photo_key ?? ""}`, m);
@@ -125,7 +120,7 @@ export default function Today() {
     setMeals((prev) => prev?.map((m) => (ids.includes(m.id) ? { ...m, feeling: f } : m)) ?? prev);
   }
 
-  //rows saved together share one eaten_at , so each group is one plate
+  // rows saved together share one eaten_at, so each group is one plate
   const plates = new Map<string, Meal[]>();
   for (const m of list)  {
     const key = `${m.eaten_at}|${m.photo_key ?? ""}`; // same time + same photo = same plate
@@ -143,17 +138,14 @@ export default function Today() {
       <h1 style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: "-0.02em" }}>Hi Hande.</h1>
       <ForYourGoals tz={tz} />
 
-      {/* One card, three numbers, like the v3 Today strip */}
+      {/* Plates and how they felt. No daily calorie total, by design. */}
       <div className="card" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", padding: "14px 0" }}>
-        <Stat label="Plates" value={String(plates.size)} />
+        <Stat label="Plates today" value={String(plates.size)} />
         <Stat label="Felt good (wk)" value={felt.pct === null ? "-" : String(felt.pct)} unit={felt.pct === null ? undefined : "%"} divider />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 18 }}>
           <Link href="/edition" style={{ fontSize: 13, color: "var(--stone)", textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>
             This week&apos;s edition →
-          </Link>
-          <Link href="/progress" style={{ fontSize: 13, color: "var(--stone)", textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>
-            See progress →
           </Link>
       </div>
 
@@ -181,16 +173,16 @@ export default function Today() {
               <span className="pill">{time}</span>
               <div style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.3 }}>{names}</div>
               <div className="muted" style={{ fontSize: 15 }}>
-                {rows.length} {rows.length === 1 ? "item" : "items"}
+                {dayTotals(rows).kcal} kcal • {rows.length} {rows.length === 1 ? "item" : "items"}
               </div>
               <FeelingChips mealIds={rows.map((m) => m.id)} initial={rows[0].feeling} onChange={(f) => setPlateFeeling(rows.map((m) => m.id), f)} />
             </div>
           </article>
         );
       })}
-      
 
-      <LogCalendar tz={tz} hideNumbers={hideNumbers} />
+
+      <LogCalendar tz={tz} />
       {win.count > 0 && <WinCard count={win.count} days={win.days} />}
       {treat && !treat.eaten && (
           <div className="card" style={{ display: "grid", gap: 2 }}>
@@ -198,7 +190,7 @@ export default function Today() {
             <div style={{ fontWeight: 500 }}>{treat.name}</div>
           </div>
         )}
-    <Link href="/case"> 
+    <Link href="/case">
       <div className="card" style={{ background: "var(--ink)", color: "var(--paper)", border: "none", display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--paper)", overflow: "hidden", flex: "none" }}>
           <Safiye mood="kuzum" size={64} />
@@ -212,18 +204,17 @@ export default function Today() {
         </div>
       </div>
     </Link>
-    
+
 
       </main>
 
-      {/* Glass only on controls (v3.1 HIG pass). More tabs join as their pages ship. */}
+      {/* Glass only on controls (v3.1 HIG pass). */}
       <nav className="tabbar glass" aria-label="Main">
         <Link href="/" aria-current="page">Home</Link>
         <Link href="/add">Dishes</Link>
         <Link href="/log" className="plus" aria-label="Log a meal">+</Link>
         <Link href="/progress">Progress</Link>
         <Link href="/profile">Profile</Link>
-       
       </nav>
       {sheet && <ClueSheet clue={sheet} found={cases.length} onClose={() => { setSheet(null); router.replace("/"); }} />}
       {showPill && !hungry && (
