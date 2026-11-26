@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { searchDishes } from "@/core/search";
+import { searchDishes } from "@/core/spot";
 
 export type LibraryDish = {
   id: number; name: string; hall: string | null; serving_size: string | null;

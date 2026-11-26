@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, withinOne, searchDishes, type SearchDish } from "./search";
+import { normalize, withinOne, searchDishes, type SearchDish } from "./spot";
 
 const D: SearchDish[] = [
     { id: 1, name: "Broccoli", hall: "Dewick" },
